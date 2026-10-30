@@ -1,0 +1,18 @@
+{
+  "id": "WorkshopLights",
+  "name": "Lights and Status",
+  "author": "jhonf441",
+  "version": "2.8.4",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/jhonf441/WorkshopLights",
+  "tags": [
+    "lights",
+    "led"
+  ],
+  "dwcVersion": "3.6",
+  "dwcDependencies": [
+    "WorkshopService"
+  ],
+  "sbcRequired": false,
+  "data": {}
+}

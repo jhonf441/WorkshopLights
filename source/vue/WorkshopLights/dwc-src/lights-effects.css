@@ -1,0 +1,15 @@
+/* Effects of the Lights and status page (dsf/lights_config.py EFFECTS).
+ * The screens animate the effects by themselves: the service only publishes
+ * the effect name, never every blink. Global classes with the lx- prefix. */
+@keyframes lx-blink { 0%, 49.9% { opacity: 1; } 50%, 100% { opacity: 0.1; } }
+@keyframes lx-double { 0%, 18% { opacity: 1; } 19%, 30% { opacity: 0.1; } 31%, 49% { opacity: 1; } 50%, 100% { opacity: 0.1; } }
+@keyframes lx-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+.lx-steady { animation: none; }
+.lx-blink_slow { animation: lx-blink 1.6s linear infinite; }
+.lx-blink { animation: lx-blink 1.2s linear infinite; }
+.lx-blink_fast { animation: lx-blink 0.8s linear infinite; }
+.lx-double { animation: lx-double 1.6s linear infinite; }
+.lx-pulse { animation: lx-pulse 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+	.lx-blink_slow, .lx-blink, .lx-blink_fast, .lx-double, .lx-pulse { animation-duration: 3s; }
+}
