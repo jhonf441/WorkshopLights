@@ -1,5 +1,9 @@
 # WorkshopLights -- historial de versiones
 
+## 2.8.6 -- 2026-10-30
+
+- The side bar scrolls inside when it is taller than the window
+
 ## 2.8.5 -- 2026-10-30
 
 - Manifest: sbcRequired true (needs WorkshopService); side bar keeps the group names
