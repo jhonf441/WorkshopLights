@@ -56,6 +56,8 @@ import SideTabs from './SideTabs.vue'
 import { api } from './workshop-api.js'
 import { errorKind, errorText as friendlyErrorText } from './friendly-error.js'
 import { ts } from './shared-t.js'
+import { exchangeExportJson, exchangeImport } from './data-exchange-ui.js'
+import { PROFILE_FORMAT, PROFILE_VERSION, PROFILE_PLUGIN, PROFILE_SPEC, profilePreview } from './profile-exchange.js'
 import StateBadge from './StateBadge.vue'
 import TabSummary from './TabSummary.vue'
 import TabOutputs from './TabOutputs.vue'
@@ -122,6 +124,18 @@ const t = {
 	profileLoaded: i18n.t('plugins.WorkshopLights.lights.profile_loaded_review_the_changes_and'),
 	errBadJson: i18n.t('plugins.WorkshopLights.lights.the_file_is_not_a_valid'),
 	errBadProfile: i18n.t('plugins.WorkshopLights.lights.the_file_does_not_look_like'),
+	profile: {
+		noun: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_noun'),
+		states: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_states'),
+		scenes: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_scenes'),
+		night: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_night'),
+		nightOn: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_night_on'),
+		nightOff: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_night_off'),
+		hardware: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_hardware'),
+		hardwareLoaded: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_hardware_loaded'),
+		hardwareKept: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_hardware_kept'),
+		notProfile: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_not_profile')
+	},
 	errNoStrip: i18n.t('plugins.WorkshopLights.lights.this_machine_has_no_led_strip'),
 	errUnknownState: i18n.t('plugins.WorkshopLights.lights.that_state_does_not_exist'),
 	errUnknownScene: i18n.t('plugins.WorkshopLights.lights.that_scene_does_not_exist')
@@ -455,31 +469,33 @@ async function applyScene(sc) {
 		message(t.cantApply + (e.message || e), true)
 	}
 }
-// export: the whole profile as a JSON file
+// export: the whole profile as a file of the exchange standard (envelope of data-exchange.js)
 function exportProfile() {
-	const obj = { kind: 'workshop-lights-profile', version: 1, exported: new Date().toISOString(), config: form.value }
-	const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' })
-	const a = document.createElement('a')
-	a.href = URL.createObjectURL(blob)
-	a.download = 'lights-profile.json'
-	document.body.appendChild(a)
-	a.click()
-	setTimeout(() => { URL.revokeObjectURL(a.href); a.remove() }, 1000)
+	const r = exchangeExportJson({ format: PROFILE_FORMAT, version: PROFILE_VERSION, plugin: PROFILE_PLUGIN, data: form.value, model: machineModel() })
+	if (!r.ok) message(ts('exchange_export_failed'), true)
 }
-// import: the service checks the file and answers the normalised profile;
-// it goes to the form WITHOUT saving (review it, then Save)
-async function importProfile(text, withHardware) {
-	try {
-		const obj = JSON.parse(text)
-		const r = await lightsApi('import', { data: obj, hardware: !!withHardware })
-		if (!r.ok) {
-			throw new Error(errorText(r))
-		}
-		applyResponse(r, true)
-		message(t.profileLoaded, false)
-	} catch (e) {
-		message(e instanceof SyntaxError ? t.errBadJson : t.cantApply + (e.message || e), true)
-	}
+// import: the file is checked and shown in a preview (exchange standard); only when the person applies it the service checks it and
+// answers the normalised profile, and it goes to the form WITHOUT saving (review it, then Save)
+function importProfile(withHardware) {
+	return exchangeImport({
+		what: t.profile.noun,
+		spec: PROFILE_SPEC,
+		model: machineModel(),
+		preview: data => profilePreview(data, withHardware, t.profile),
+		apply: async data => {
+			try {
+				const r = await lightsApi('import', { data, hardware: !!withHardware })
+				if (!r.ok) {
+					throw new Error(errorText(r))
+				}
+				applyResponse(r, true)
+				message(t.profileLoaded, false)
+			} catch (e) {
+				throw new Error(t.cantApply + (e.message || e))
+			}
+		},
+		notify: (text, ok) => message(text, !ok)
+	})
 }
 
 // the tabs read and change the page through this object (refs and computeds are unwrapped by reactive)

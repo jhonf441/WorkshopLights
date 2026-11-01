@@ -58,6 +58,8 @@ import { mapActions } from 'vuex'
 import { api } from './workshop-api.js'
 import { errorKind, errorText } from './friendly-error.js'
 import { ts } from './shared-t.js'
+import { exchangeExportJson, exchangeImport } from './data-exchange-ui.js'
+import { PROFILE_FORMAT, PROFILE_VERSION, PROFILE_PLUGIN, PROFILE_SPEC, profilePreview } from './profile-exchange.js'
 import StateBadge from './StateBadge.vue'
 import TabSummary from './TabSummary.vue'
 import TabOutputs from './TabOutputs.vue'
@@ -123,6 +125,18 @@ const T = {
 	profileLoaded: i18n.t('plugins.WorkshopLights.lights.profile_loaded_review_the_changes_and'),
 	errBadJson: i18n.t('plugins.WorkshopLights.lights.the_file_is_not_a_valid'),
 	errBadProfile: i18n.t('plugins.WorkshopLights.lights.the_file_does_not_look_like'),
+	profile: {
+		noun: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_noun'),
+		states: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_states'),
+		scenes: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_scenes'),
+		night: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_night'),
+		nightOn: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_night_on'),
+		nightOff: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_night_off'),
+		hardware: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_row_hardware'),
+		hardwareLoaded: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_hardware_loaded'),
+		hardwareKept: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_hardware_kept'),
+		notProfile: i18n.t('plugins.WorkshopLights.tabAdvanced.profile_not_profile')
+	},
 	errNoStrip: i18n.t('plugins.WorkshopLights.lights.this_machine_has_no_led_strip'),
 	errUnknownState: i18n.t('plugins.WorkshopLights.lights.that_state_does_not_exist'),
 	errUnknownScene: i18n.t('plugins.WorkshopLights.lights.that_scene_does_not_exist')
@@ -489,31 +503,33 @@ export default {
 				this.message(T.cantApply + (e.message || e), true);
 			}
 		},
-		// export: the whole profile as a JSON file
+		// export: the whole profile as a file of the exchange standard (envelope of data-exchange.js)
 		exportProfile() {
-			const obj = { kind: 'workshop-lights-profile', version: 1, exported: new Date().toISOString(), config: this.form };
-			const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
-			const a = document.createElement('a');
-			a.href = URL.createObjectURL(blob);
-			a.download = 'lights-profile.json';
-			document.body.appendChild(a);
-			a.click();
-			setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+			const r = exchangeExportJson({ format: PROFILE_FORMAT, version: PROFILE_VERSION, plugin: PROFILE_PLUGIN, data: this.form, model: this.model });
+			if (!r.ok) this.message(ts('exchange_export_failed'), true);
 		},
-		// import: the service checks the file and answers the normalised profile;
-		// it goes to the form WITHOUT saving (review it, then Save)
-		async importProfile(text, withHardware) {
-			try {
-				const obj = JSON.parse(text);
-				const r = await this.lightsApi('import', { data: obj, hardware: !!withHardware });
-				if (!r.ok) {
-					throw new Error(this.errorText(r));
-				}
-				this.applyResponse(r, true);
-				this.message(T.profileLoaded, false);
-			} catch (e) {
-				this.message(e instanceof SyntaxError ? T.errBadJson : T.cantApply + (e.message || e), true);
-			}
+		// import: the file is checked and shown in a preview (exchange standard); only when the person applies it the service checks it and
+		// answers the normalised profile, and it goes to the form WITHOUT saving (review it, then Save)
+		importProfile(withHardware) {
+			return exchangeImport({
+				what: T.profile.noun,
+				spec: PROFILE_SPEC,
+				model: this.model,
+				preview: data => profilePreview(data, withHardware, T.profile),
+				apply: async data => {
+					try {
+						const r = await this.lightsApi('import', { data, hardware: !!withHardware });
+						if (!r.ok) {
+							throw new Error(this.errorText(r));
+						}
+						this.applyResponse(r, true);
+						this.message(T.profileLoaded, false);
+					} catch (e) {
+						throw new Error(T.cantApply + (e.message || e));
+					}
+				},
+				notify: (text, ok) => this.message(text, !ok)
+			});
 		}
 	}
 };

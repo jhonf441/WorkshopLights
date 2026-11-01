@@ -109,9 +109,8 @@
 				<div class="text-caption text-faint mb-3">{{ t.profileWhat }}</div>
 				<div class="d-flex flex-wrap align-center" style="gap:12px">
 					<v-btn small outlined @click="lights.exportProfile()"><v-icon small left>mdi-download</v-icon>{{ t.export }}</v-btn>
-					<v-btn small outlined @click="$refs.file.click()"><v-icon small left>mdi-upload</v-icon>{{ t.import }}</v-btn>
+					<v-btn small outlined @click="lights.importProfile(withHardware)"><v-icon small left>mdi-upload</v-icon>{{ t.import }}</v-btn>
 					<v-checkbox v-model="withHardware" :label="t.withHardware" :hint="t.withHardwareHelp" persistent-hint dense class="mt-0 pt-0" />
-					<input ref="file" type="file" accept="application/json,.json" style="display:none" @change="onFile">
 				</div>
 			</v-card-text>
 		</v-card>
@@ -278,16 +277,6 @@ export default {
 			if (id) {
 				this.sel = id;
 			}
-		},
-		onFile(ev) {
-			const f = ev.target.files && ev.target.files[0];
-			ev.target.value = '';
-			if (!f) {
-				return;
-			}
-			const rd = new FileReader();
-			rd.onload = () => this.lights.importProfile(String(rd.result), this.withHardware);
-			rd.readAsText(f);
 		}
 	}
 };

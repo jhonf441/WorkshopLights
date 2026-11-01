@@ -200,7 +200,17 @@
 		"pi_save_first": "Guarda los cambios para poder probar.",
 		"pi_error": "Error: {e}",
 		"pi_writes": "{n} escrituras ({ms} ms cada una)",
-		"pi_wiring": "Conexión: la tira necesita su propia fuente de 5 V, tierra común con la Pi y un adaptador de nivel de 3,3 V a 5 V en la línea de datos. Esta opción no está probada con una tira real."
+		"pi_wiring": "Conexión: la tira necesita su propia fuente de 5 V, tierra común con la Pi y un adaptador de nivel de 3,3 V a 5 V en la línea de datos. Esta opción no está probada con una tira real.",
+		"profile_noun": "perfil de iluminación",
+		"profile_row_states": "Estados",
+		"profile_row_scenes": "Escenas de la luz de trabajo",
+		"profile_row_night": "Horario nocturno",
+		"profile_night_on": "activado",
+		"profile_night_off": "desactivado",
+		"profile_row_hardware": "Hardware de la tira (cantidad de LED, orden, salidas)",
+		"profile_hardware_loaded": "se carga del archivo",
+		"profile_hardware_kept": "se deja como está en esta máquina",
+		"profile_not_profile": "El archivo no tiene ajustes de iluminación."
 	},
 	"tabColors": {
 		"okabe_and_ito_palette_distinguishable_with": "Paleta de Okabe e Ito (se distingue con las formas más comunes de daltonismo) y un patrón de parpadeo distinto en los estados principales.",

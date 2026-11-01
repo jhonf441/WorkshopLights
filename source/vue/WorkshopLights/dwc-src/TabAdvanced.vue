@@ -109,9 +109,8 @@
 				<div class="text-body-small text-faint mb-3">{{ t.profileWhat }}</div>
 				<div class="d-flex flex-wrap align-center" style="gap:12px">
 					<v-btn size="small" variant="outlined" @click="lights.exportProfile()"><v-icon size="small" start>mdi-download</v-icon>{{ t.export }}</v-btn>
-					<v-btn size="small" variant="outlined" @click="fileInput.click()"><v-icon size="small" start>mdi-upload</v-icon>{{ t.import }}</v-btn>
+					<v-btn size="small" variant="outlined" @click="lights.importProfile(withHardware)"><v-icon size="small" start>mdi-upload</v-icon>{{ t.import }}</v-btn>
 					<v-checkbox v-model="withHardware" :label="t.withHardware" :hint="t.withHardwareHelp" persistent-hint density="compact" class="mt-0 pt-0" />
-					<input ref="fileInput" type="file" accept="application/json,.json" style="display:none" @change="onFile">
 				</div>
 			</v-card-text>
 		</v-card>
@@ -166,7 +165,6 @@ function readView() {
 }
 
 const root = ref(null)
-const fileInput = ref(null)
 const sel = ref(null)
 const withHardware = ref(false)
 const onlyActive = ref(false)
@@ -265,16 +263,6 @@ function touch(ev) {
 	if (id) {
 		sel.value = id
 	}
-}
-function onFile(ev) {
-	const f = ev.target.files && ev.target.files[0]
-	ev.target.value = ''
-	if (!f) {
-		return
-	}
-	const rd = new FileReader()
-	rd.onload = () => lights.importProfile(String(rd.result), withHardware.value)
-	rd.readAsText(f)
 }
 </script>
 

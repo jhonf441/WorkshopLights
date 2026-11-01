@@ -200,7 +200,17 @@
 		"pi_save_first": "Save the changes to be able to test.",
 		"pi_error": "Error: {e}",
 		"pi_writes": "{n} writes ({ms} ms each)",
-		"pi_wiring": "Wiring: the strip needs its own 5 V supply, a common ground with the Pi and a 3.3 V to 5 V level shifter on the data line. This option has not been tested with a real strip."
+		"pi_wiring": "Wiring: the strip needs its own 5 V supply, a common ground with the Pi and a 3.3 V to 5 V level shifter on the data line. This option has not been tested with a real strip.",
+		"profile_noun": "lighting profile",
+		"profile_row_states": "States",
+		"profile_row_scenes": "Work light scenes",
+		"profile_row_night": "Night schedule",
+		"profile_night_on": "on",
+		"profile_night_off": "off",
+		"profile_row_hardware": "Strip hardware (LED counts, order, outputs)",
+		"profile_hardware_loaded": "loaded from the file",
+		"profile_hardware_kept": "kept as it is on this machine",
+		"profile_not_profile": "The file has no lighting settings."
 	},
 	"tabColors": {
 		"okabe_and_ito_palette_distinguishable_with": "Okabe and Ito palette (distinguishable with the most common forms of color blindness) and a different blink pattern on the main states.",
