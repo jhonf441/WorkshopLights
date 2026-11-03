@@ -64,7 +64,14 @@
 		"lighting": "Iluminación",
 		"states": "Estados",
 		"advanced": "Avanzado",
-		"discard": "Descartar"
+		"discard": "Descartar",
+		"banner_lights_off": "Luces apagadas",
+		"banner_lighting_auto_off": "Iluminación encendida, estado automático apagado",
+		"banner_state_more": "{name} +{n}",
+		"banner_state_test": "{name} (prueba)",
+		"banner_state_help": "Lo que muestra ahora la luz de estado, en la tira, las pantallas y los LEDs de la placa. El detalle está en la sección Resumen.",
+		"banner_outputs": "Salidas: {n} de {total}",
+		"banner_outputs_help": "Las tres salidas del estado y cuáles están en uso. Toca para ver cada una."
 	},
 	"stateBadge": {
 		"no_status_light_data": "Sin datos de las luces de estado",

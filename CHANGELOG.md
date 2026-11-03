@@ -1,5 +1,13 @@
 # WorkshopLights -- historial de versiones
 
+## 2.8.10 -- 2026-11-03
+
+- Calmer banner: one state chip and one Outputs pill
+
+## Unreleased (for the next version)
+
+- Page bar (DWC 3.6): one calm row of equal chips. The health chip of the family stays the only health signal; the state sentence and the three hardware chips are replaced by ONE light state chip (a dot of the color of the status light + a short phrase: "Lights off", "Lighting on, automatic status off", or the name of the state with "+n" when several are active; the tooltip keeps the reason and the active states) and ONE outputs pill ("Outputs: 2 of 3") that opens the list of the three outputs with their state and their line of help. Pure decisions in banner-state.js (both lines, same file). Family: a chip with a state of its own color (`wf-state-chip`) is a state of the bar, without a border.
+
 ## 2.8.9 -- 2026-10-31
 
 - Lot 2: one relay client, camera client folder, single gallery, one presence helper, shared resources released at the last plugin, flash for the operator

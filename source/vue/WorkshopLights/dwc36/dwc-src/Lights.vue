@@ -2,16 +2,27 @@
 	<v-container :style="secStyle" fluid class="pa-0 lights-page workshop-theme">
 		<service-notice />
 
-		<!-- ===== Header: always visible, shows the current state ===== -->
+		<!-- ===== Header: always visible. One row of equal chips (2026-11-03, banner-state.js): the health of the page (page-header),
+		     the light state (a dot of its color + a short phrase, no border: a state of the bar) and the outputs pill ("Outputs: 2 of 3",
+		     a menu with the three outputs, each with its state and its line of help), then the start-up chip. ===== -->
 		<page-header :lead="t.lead" icon="mdi-led-strip-variant" :title="t.title" :loading="!saved && !msgError" :reasons="saved ? [] : [{ level: 'warn', text: t.cantRead }]">
-			<state-badge :ind="indicator" compact class="flex-grow-1" style="min-width:180px" />
-			<v-chip small outlined :color="stripPresent ? 'success' : 'grey'" :title="t.chipStripHelp">
-				<v-icon small left>mdi-led-strip-variant</v-icon>{{ stripPresent ? t.chipStrip : t.chipNoStrip }}
-			</v-chip>
-			<v-chip small outlined color="success" :title="chipScreenHelp"><v-icon small left>mdi-monitor-dashboard</v-icon>{{ t.chipScreen }}</v-chip>
-			<v-chip small outlined :color="form.leds_board && form.leds_board.active ? 'success' : 'grey'" :title="t.chipBoardHelp">
-				<v-icon small left>mdi-chip</v-icon>{{ form.leds_board && form.leds_board.active ? t.chipBoard : t.chipNoBoard }}
-			</v-chip>
+			<v-chip small outlined class="wf-state-chip" :style="{ '--wf-dotc': bannerDot, '--wf-dotd': 'inline-block' }" :title="bannerStateHelp">{{ bannerStateText }}</v-chip>
+			<v-menu offset-y :close-on-content-click="false">
+				<template v-slot:activator="{ on, attrs }">
+					<v-chip small outlined class="lights-outputs-chip" :title="t.outputsHelp" v-bind="attrs" v-on="on">
+						{{ $t('plugins.WorkshopLights.lights.banner_outputs', { n: bannerOutputs.active, total: bannerOutputs.total }) }}<v-icon x-small right>mdi-chevron-down</v-icon>
+					</v-chip>
+				</template>
+				<v-list dense class="lights-outputs-list">
+					<v-list-item v-for="o in bannerOutputs.items" :key="o.id">
+						<v-list-item-icon class="mr-3"><v-icon small>{{ o.icon }}</v-icon></v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title><span class="wf-dot lights-output-dot" :class="{ ok: o.on }" aria-hidden="true"></span>{{ $t(o.labelKey) }}</v-list-item-title>
+							<v-list-item-subtitle class="lights-output-help">{{ $t(o.helpKey) }}</v-list-item-subtitle>
+						</v-list-item-content>
+					</v-list-item>
+				</v-list>
+			</v-menu>
 			<template v-slot:startup><startup-panel plugin="WorkshopLights" :defs="rowsStartup" /></template>
 		</page-header>
 
@@ -60,7 +71,8 @@ import { errorKind, errorText } from './friendly-error.js'
 import { ts } from './shared-t.js'
 import { exchangeExportJson, exchangeImport } from './data-exchange-ui.js'
 import { PROFILE_FORMAT, PROFILE_VERSION, PROFILE_PLUGIN, PROFILE_SPEC, profilePreview } from './profile-exchange.js'
-import StateBadge from './StateBadge.vue'
+import { lightState, outputsSummary } from './banner-state.js' // the two chips of the page bar (pure)
+import { colorScreen } from './colors.js' // screen version of a LED color (vue/_shared)
 import TabSummary from './TabSummary.vue'
 import TabOutputs from './TabOutputs.vue'
 import TabLighting from './TabLighting.vue'
@@ -98,14 +110,8 @@ const T = {
 	title: i18n.t('plugins.WorkshopLights.common.lights_and_status'),
 	lead: i18n.t('plugins.WorkshopLights.common.lead'),
 	intro: i18n.t('plugins.WorkshopLights.lights.here_you_decide_how_what_the'),
-	chipStrip: i18n.t('plugins.WorkshopLights.common.led_strip'),
-	chipNoStrip: i18n.t('plugins.WorkshopLights.lights.no_led_strip'),
-	chipStripHelp: i18n.t('plugins.WorkshopLights.lights.output_1_the_led_strip_connected'),
-	chipScreen: i18n.t('plugins.WorkshopLights.common.on_screen_indicator'),
-	chipScreenHelp: i18n.t('plugins.WorkshopLights.lights.output_2_the_indicator_of_this'),
-	chipBoard: i18n.t('plugins.WorkshopLights.common.board_leds'),
-	chipNoBoard: i18n.t('plugins.WorkshopLights.lights.board_leds_off'),
-	chipBoardHelp: i18n.t('plugins.WorkshopLights.lights.output_3_a_copy_of_the'),
+	stateHelp: i18n.t('plugins.WorkshopLights.lights.banner_state_help'),
+	outputsHelp: i18n.t('plugins.WorkshopLights.lights.banner_outputs_help'),
 	tabSummary: i18n.t('plugins.WorkshopLights.lights.summary'),
 	tabOutputs: i18n.t('plugins.WorkshopLights.lights.outputs'),
 	tabLighting: i18n.t('plugins.WorkshopLights.lights.lighting'),
@@ -176,7 +182,7 @@ const FORM_EMPTY = {
 
 export default {
 	mixins: [roleMixin],
-	components: { PageHeader, SideTabs, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, StateBadge, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
+	components: { PageHeader, SideTabs, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
 	provide() {
 		// the tabs read and change the page through this object
 		return { lights: this };
@@ -212,10 +218,27 @@ export default {
 		secStyle() {
 			return { '--wf-sec': sectionColor(this.tab) }
 		},
-		// the on-screen indicator also shows in the side bar and the jog: those plugins are named only when they are there
-		chipScreenHelp() {
-			const k = 'plugins.WorkshopLights.lights.output_2_the_indicator_of_this';
-			return this.$t(k + (pluginActive(this.$store, 'bar') ? '' : '_no_bar') + (pluginActive(this.$store, 'jog') ? '' : '_no_jog'));
+		// the page bar (banner-state.js): the light state in one line, with the screen version of its color as the dot
+		bannerState() {
+			return lightState(this.indicator, this.lightOn);
+		},
+		bannerStateText() {
+			const r = this.bannerState;
+			return r.key ? this.$t(r.key, r.params) : r.text;
+		},
+		bannerDot() {
+			const hex = this.bannerState.hex;
+			return hex ? colorScreen(hex, 'fill') : 'rgba(128, 128, 128, 0.6)';
+		},
+		// the tooltip: what the chip is, the reason the service gives and the states active at the same time
+		bannerStateHelp() {
+			const r = this.bannerState;
+			return [T.stateHelp, r.reason, r.names.length > 1 ? r.names.join(', ') : ''].filter(Boolean).join('\n');
+		},
+		// the three outputs and which ones are in use; the on-screen indicator also shows in the side bar and the jog: those plugins are
+		// named in its help only when they are there
+		bannerOutputs() {
+			return outputsSummary(this.form, { bar: pluginActive(this.$store, 'bar'), jog: pluginActive(this.$store, 'jog') });
 		},
 		// who paints the strip: the Pi (strip over SPI that replaces the Duet's) or the Duet. With the Pi every effect is
 		// complete; the Duet strip cannot follow the double flash and the pulse (each frame is a set of codes to the board).
@@ -538,6 +561,17 @@ export default {
 <style scoped>
 .text-faint {
 	color: var(--tp-faint);
+}
+/* the outputs menu of the page bar: the line of help of each output wraps instead of being cut */
+.lights-outputs-list {
+	max-width: 420px;
+}
+.lights-output-help {
+	white-space: normal;
+}
+.lights-output-dot {
+	margin-right: 6px;
+	vertical-align: middle;
 }
 /* below DWC's top bar (64 px), above the rest of the page */
 .lights-fixed {

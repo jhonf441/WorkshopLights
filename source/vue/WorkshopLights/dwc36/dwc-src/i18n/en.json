@@ -64,7 +64,14 @@
 		"lighting": "Lighting",
 		"states": "States",
 		"advanced": "Advanced",
-		"discard": "Discard"
+		"discard": "Discard",
+		"banner_lights_off": "Lights off",
+		"banner_lighting_auto_off": "Lighting on, automatic status off",
+		"banner_state_more": "{name} +{n}",
+		"banner_state_test": "{name} (test)",
+		"banner_state_help": "What the status light shows now, on the strip, the screens and the board LEDs. The Summary section has the detail.",
+		"banner_outputs": "Outputs: {n} of {total}",
+		"banner_outputs_help": "The three outputs of the status and which ones are in use. Tap to see each one."
 	},
 	"stateBadge": {
 		"no_status_light_data": "No status light data",
