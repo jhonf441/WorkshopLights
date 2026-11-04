@@ -9,11 +9,17 @@
     "lights",
     "led"
   ],
-  "dwcVersion": "3.7",
+  "dwcVersion": "3.6",
   "dwcDependencies": [
     "WorkshopService"
   ],
   "sbcRequired": true,
-  "sbcDsfVersion": "3",
-  "data": {}
+  "sbcDsfVersion": "3.6",
+  "data": {},
+  "dwcFiles": [
+    "css/WorkshopLights.20ea7623.css",
+    "css/WorkshopLights.20ea7623.css.gz",
+    "js/WorkshopLights.5cdfbbc9.js",
+    "js/WorkshopLights.5cdfbbc9.js.gz"
+  ]
 }
