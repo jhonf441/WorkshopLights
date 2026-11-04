@@ -363,7 +363,8 @@ async function load() {
 		}
 	} catch (e) {
 		// without a session the reason is the sign-in, not a service that is down
-		message(errorKind(e) === 'other' ? t.cantRead : friendlyErrorText(e, ts), true)
+		// a missing sign-in is said by the sign-in chip of the page bar, not by a second red line here
+		if (errorKind(e) !== 'login') message(errorKind(e) === 'other' ? t.cantRead : friendlyErrorText(e, ts), true)
 	}
 }
 async function save() {

@@ -1,5 +1,17 @@
 # WorkshopLights -- historial de versiones
 
+## 2.8.13 -- 2026-11-04
+
+- No red sign-in line in the save bar
+
+## 2.8.12 -- 2026-11-04
+
+- No 'strip not in config.g' warning while signed out
+
+## 2.8.11 -- 2026-11-04
+
+- Start-up card locked without a session; shared help tip; session chip class
+
 ## 2.8.10 -- 2026-11-03
 
 - Calmer banner: one state chip and one Outputs pill

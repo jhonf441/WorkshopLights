@@ -2,24 +2,18 @@
   "id": "WorkshopLights",
   "name": "Lights and Status",
   "author": "jhonf441",
-  "version": "2.8.10",
+  "version": "2.8.13",
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/jhonf441/WorkshopLights",
   "tags": [
     "lights",
     "led"
   ],
-  "dwcVersion": "3.6",
+  "dwcVersion": "3.7",
   "dwcDependencies": [
     "WorkshopService"
   ],
   "sbcRequired": true,
-  "sbcDsfVersion": "3.6",
-  "data": {},
-  "dwcFiles": [
-    "css/WorkshopLights.64a79d25.css",
-    "css/WorkshopLights.64a79d25.css.gz",
-    "js/WorkshopLights.b6cad4fc.js",
-    "js/WorkshopLights.b6cad4fc.js.gz"
-  ]
+  "sbcDsfVersion": "3",
+  "data": {}
 }

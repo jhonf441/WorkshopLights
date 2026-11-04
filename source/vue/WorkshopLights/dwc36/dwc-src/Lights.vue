@@ -416,7 +416,8 @@ export default {
 				}
 			} catch (e) {
 				// without a session the reason is the sign-in, not a service that is down
-				this.message(errorKind(e) === 'other' ? T.cantRead : errorText(e, ts), true);
+				// a missing sign-in is said by the sign-in chip of the page bar, not by a second red line here
+				if (errorKind(e) !== 'login') this.message(errorKind(e) === 'other' ? T.cantRead : errorText(e, ts), true);
 			}
 		},
 		message(text, error) {

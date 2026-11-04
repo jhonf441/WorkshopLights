@@ -44,7 +44,7 @@
 				</template>
 			</div>
 
-			<v-alert v-if="!lights.m950.line" dense outlined type="warning" class="mt-3 mb-0">
+			<v-alert v-if="lights.saved && !lights.m950.line" dense outlined type="warning" class="mt-3 mb-0">
 				{{ t.noM950 }} <code>M950 E{{ form.led_strip }} C"&lt;{{ t.output }}&gt;" T2 U{{ totalTab }}</code>
 			</v-alert>
 			<v-alert v-if="totalFirmwareTab && totalTab !== totalFirmwareTab" dense outlined type="warning" class="mt-3 mb-0">
@@ -116,7 +116,7 @@
 					{{ lights.armed === 'removeStrip' ? t.tapAgainRemove : t.removeStrip }}
 				</v-btn>
 			</div>
-			<v-alert v-if="stripX && !m950LineTab" dense outlined type="warning" class="mb-3">
+			<v-alert v-if="lights.saved && stripX && !m950LineTab" dense outlined type="warning" class="mb-3">
 				{{ t.stripE }}{{ eTab }} {{ t.stripNotInConfig }} <code>M950 E{{ eTab }} C"&lt;{{ t.output }}&gt;" T2 U{{ totalTab }}</code>
 			</v-alert>
 
