@@ -8,12 +8,9 @@
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</div>
 				<div class="text-caption text-faint mb-3">{{ t.lightWhat }}</div>
 				<div class="d-flex flex-wrap" style="gap:24px">
-					<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" :hint="t.lightSwitchHelp" persistent-hint dense class="mt-0" :loading="lights.busyLight" @change="lights.changeLight" />
+					<div class="help-tip-row"><v-switch :input-value="lights.lightOn" dense class="mt-0" :loading="lights.busyLight" @change="lights.changeLight" hide-details :label="t.lightSwitch" /><help-tip :title="t.lightSwitch">{{ t.lightSwitchHelp }}</help-tip></div>
 					<template v-if="lights.saved">
-						<v-switch
-							v-for="q in zoneSwitches" :key="q.key" :input-value="q.z.on" :label="q.label" :hint="t.zoneSwitchHelp" persistent-hint
-							dense class="mt-0" :loading="lights.busyZone === q.key" @change="changeZone(q, $event)"
-						/>
+						<div v-for="q in zoneSwitches" :key="q.key" class="help-tip-row"><v-switch :input-value="q.z.on" dense class="mt-0" :loading="lights.busyZone === q.key" @change="changeZone(q, $event)" hide-details :label="q.label" /><help-tip :title="q.label">{{ t.zoneSwitchHelp }}</help-tip></div>
 					</template>
 				</div>
 				<div class="group-title mt-4">{{ t.colorTitle }}</div>
@@ -53,10 +50,10 @@
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-timer-outline</v-icon>{{ t.autoTitle }}</div>
 				<div class="text-caption text-faint mb-3">{{ autoWhat }}</div>
 				<div class="d-flex flex-wrap align-center" style="gap:16px">
-					<v-switch v-model="form.work_light.auto_off.enabled" :label="t.autoOff" :hint="t.autoOffHelp" persistent-hint dense class="mt-0" />
+					<div class="help-tip-row"><v-switch v-model="form.work_light.auto_off.enabled" dense class="mt-0" hide-details :label="t.autoOff" /><help-tip :title="t.autoOff">{{ t.autoOffHelp }}</help-tip></div>
 					<v-text-field v-model.number="form.work_light.auto_off.minutes" type="number" min="1" max="600" suffix="min" :label="t.autoOffMinutes" dense outlined hide-details style="max-width:170px" :disabled="!form.work_light.auto_off.enabled" />
 				</div>
-				<v-switch v-model="form.work_light.auto_on_job" :label="t.autoOn" :hint="t.autoOnHelp" persistent-hint dense class="mt-3" />
+				<div class="help-tip-row"><v-switch v-model="form.work_light.auto_on_job" dense class="mt-3" hide-details :label="t.autoOn" /><help-tip :title="t.autoOn">{{ t.autoOnHelp }}</help-tip></div>
 				<div v-if="hasCamera" class="text-caption text-faint mt-2"><v-icon x-small class="mr-1">mdi-camera</v-icon>{{ t.cameraNote }}</div>
 			</v-card-text>
 		</v-card>
@@ -104,8 +101,8 @@
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-flash-outline</v-icon>{{ t.powerTitle }}</div>
 				<div class="text-caption text-faint mb-3">{{ t.powerWhat }}</div>
 				<div class="d-flex flex-wrap" style="gap:12px">
-					<v-text-field v-model.number="form.power.ma_per_channel" type="number" min="1" max="60" suffix="mA" :label="t.perChannel" :hint="t.perChannelHelp" persistent-hint dense outlined style="max-width:260px" />
-					<v-text-field v-model.number="form.power.limit_ma" type="number" min="0" suffix="mA" :label="t.limit" :hint="t.limitHelp" persistent-hint dense outlined style="max-width:260px" />
+					<wf-field id="lf-10" :label="t.perChannel" style="max-width:260px"><template #help><help-tip :title="t.perChannel">{{ t.perChannelHelp }}</help-tip></template><v-text-field id="lf-10" v-model.number="form.power.ma_per_channel" type="number" min="1" max="60" suffix="mA" dense outlined hide-details :aria-label="t.perChannel" /></wf-field>
+					<wf-field id="lf-11" :label="t.limit" style="max-width:260px"><template #help><help-tip :title="t.limit">{{ t.limitHelp }}</help-tip></template><v-text-field id="lf-11" v-model.number="form.power.limit_ma" type="number" min="0" suffix="mA" dense outlined hide-details :aria-label="t.limit" /></wf-field>
 				</div>
 				<div class="d-flex flex-wrap text-body-2 mt-3" style="gap:6px 24px">
 					<span><b>{{ t.worst }}:</b> {{ worst }} mA ({{ totalLeds }} {{ t.leds }})</span>
@@ -124,6 +121,8 @@ import i18n from '../../i18n'
 
 import ColorRgbw from './ColorRgbw.vue'
 import { pluginActive } from './workshop-ids.js' // the camera is another plugin: nothing about it when it is absent
+import HelpTip from './HelpTip.vue' // vue/_shared36
+import WfField from './WfField.vue' // vue/_shared36
 
 // Every user-visible text of this component is here.
 const T = {
@@ -175,7 +174,7 @@ const T = {
 };
 
 export default {
-	components: { ColorRgbw },
+	components: { WfField, HelpTip, ColorRgbw },
 	inject: ['lights'],
 	data() {
 		return { t: T, nightFromMenu: false, nightToMenu: false };

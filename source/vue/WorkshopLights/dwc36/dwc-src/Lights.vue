@@ -5,7 +5,7 @@
 		<!-- ===== Header: always visible. One row of equal chips (2026-11-03, banner-state.js): the health of the page (page-header),
 		     the light state (a dot of its color + a short phrase, no border: a state of the bar) and the outputs pill ("Outputs: 2 of 3",
 		     a menu with the three outputs, each with its state and its line of help), then the start-up chip. ===== -->
-		<page-header :lead="t.lead" icon="mdi-led-strip-variant" :title="t.title" :loading="!saved && !msgError && !readRefused" :reasons="saved ? [] : [{ level: 'warn', text: readRefused || t.cantRead }]">
+		<page-header :lead="t.lead" icon="mdi-led-strip-variant" :title="t.title" :loading="!saved && !msgError && !readRefused" :reasons="saved || readRefused ? [] : [{ level: 'warn', text: t.cantRead }]">
 			<v-chip small outlined class="wf-state-chip" :style="{ '--wf-dotc': bannerDot, '--wf-dotd': 'inline-block' }" :title="bannerStateHelp">{{ bannerStateText }}</v-chip>
 			<v-menu offset-y :close-on-content-click="false">
 				<template v-slot:activator="{ on, attrs }">
@@ -28,7 +28,7 @@
 
 
 		<!-- the page could not be read because of the session or the role: said here (the save bar is for technicians only) -->
-		<div v-if="readRefused && !saved" class="text-body-2 px-2 py-1 lights-read-refused" role="note"><v-icon small left>mdi-lock-outline</v-icon>{{ readRefused }}</div>
+		<session-notice v-if="readRefused && !saved" :kind="readKind" needed="technician" :action="readAction" />
 		<hidden-note :sections="allTabs" />
 
 		<!-- ===== Tabs ===== -->
@@ -46,11 +46,12 @@
 		</div>
 
 		<!-- a message of someone who cannot see the save bar (a refused scene, for example) -->
-		<div v-if="msg && msgError && !atLeast('technician')" class="text-body-2 error--text px-2 py-1" role="alert">{{ msg }}</div>
+		<session-notice v-if="note && refusal && !atLeast('technician')" :kind="refusal" needed="technician" :action="refusedAction" />
+		<div v-else-if="note && msgError && !atLeast('technician')" class="text-body-2 error--text px-2 py-1" role="alert">{{ note }}</div>
 
 		<!-- ===== Save ===== -->
-		<div v-if="atLeast('technician') && (changed || msg)" class="save-bar">
-			<span v-if="msg" class="text-body-2 mr-3" :class="msgError ? 'error--text' : 'success--text'">{{ msg }}</span>
+		<div v-if="atLeast('technician') && (changed || note)" class="save-bar">
+			<span v-if="note" class="text-body-2 mr-3" :class="refusal ? '' : msgError ? 'error--text' : 'success--text'">{{ note }}</span>
 			<span v-else-if="changed" class="text-body-2 warning--text mr-3">{{ t.unsaved }}</span>
 			<v-btn small :disabled="!changed" text class="mr-2" @click="discard()">{{ t.discard }}</v-btn>
 			<span v-if="changed && !numbersOk" class="text-body-2 error--text mr-3">{{ t.checkNumbers }}</span>
@@ -73,7 +74,8 @@ import PageHeader from './PageHeader.vue' // header of every page (vue/_shared)
 import { rowsLights } from './startup-rows.js'
 import SideTabs from './SideTabs.vue'
 import HiddenNote from './HiddenNote.vue' // the quiet line for the tabs this role does not see (vue/_shared36)
-import { refusalText } from './refusal.js'
+import { refusalCauseNow, refusalNow } from './session-refusal.js' // a refusal told by its cause (vue/_shared36)
+import SessionNotice from './SessionNotice.vue' // the notice by cause (vue/_shared36)
 import { mapActions } from 'vuex'
 import { api } from './workshop-api.js'
 import { errorKind, errorText } from './friendly-error.js'
@@ -191,7 +193,10 @@ const FORM_EMPTY = {
 
 export default {
 	mixins: [roleMixin],
-	components: { PageHeader, SideTabs, HiddenNote, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
+	// what the previous person read (the configuration, the refusal they saw) must not stay when the identity changes; onSessionChange reads it again
+	sessionData: ['saved', 'form', 'catalog', 'm950', 'm950All', 'msg', 'msgError', 'refused', 'readError', 'countN', 'stripSel', 'copyConfig'],
+	sessionErrors: ['msg', 'msgError', 'refused', 'readError'], // what a refusal or a failure said: cleared when the person signs in, out or changes role (role-mixin.js)
+	components: { SessionNotice, PageHeader, SideTabs, HiddenNote, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
 	provide() {
 		// the tabs read and change the page through this object
 		return { lights: this };
@@ -208,7 +213,8 @@ export default {
 			saving: false,
 			msg: null,
 			msgError: false,
-			readRefused: '', // the sentence of the cause when lights.get was refused (no session / role); '' otherwise
+			readError: null, // the error of lights.get when it was refused (no session / role); null otherwise. The sentence is computed from it
+			refused: null, // { error, action } of the last action (msg) when it was refused: the sentence and the cause are computed, never stored
 			countN: 37,
 			stripEnlarged: false,
 			stripSel: null, // null = main strip; number = index in form.strips_extra
@@ -225,6 +231,30 @@ export default {
 		};
 	},
 	computed: {
+		// what a refusal said is computed from the error it came with: it follows the role and the language (never a stored sentence)
+		readKind() {
+			void this.identityTick;
+			return refusalCauseNow(this.readError);
+		},
+		readRefused() {
+			void this.identityTick;
+			return refusalNow(this.readError, 'technician', i18n.t('plugins.WorkshopLights.lights.action_read'));
+		},
+		readAction() {
+			return i18n.t('plugins.WorkshopLights.lights.action_read');
+		},
+		refusal() {
+			void this.identityTick;
+			return this.refused ? refusalCauseNow(this.refused.error) : '';
+		},
+		refusedAction() {
+			return this.refused && this.refused.action ? i18n.t(this.refused.action) : '';
+		},
+		// the line of the last action: its text, or (a refusal) the sentence of its cause
+		note() {
+			void this.identityTick;
+			return this.refused ? refusalNow(this.refused.error, 'technician', this.refusedAction) : this.msg;
+		},
 		secStyle() {
 			return { '--wf-sec': sectionColor(this.tab) }
 		},
@@ -432,16 +462,15 @@ export default {
 			try {
 				const r = await this.lightsApi('get');
 				if (r.ok) {
-					this.readRefused = '';
+					this.readError = null;
 					this.applyResponse(r);
 				}
 			} catch (e) {
 				// a refusal (no session / role) is said with its cause and stops the loading; only a real failure says "cannot read"
-				const refused = refusalText(e, ts('lock_signed_out'), ts('err_role'));
-				if (refused) {
-					this.readRefused = refused;
+				if (refusalCauseNow(e)) {
+					this.readError = e;
 				} else {
-					this.readRefused = '';
+					this.readError = null;
 					this.message(errorKind(e) === 'other' ? T.cantRead : errorText(e, ts), true);
 				}
 			}
@@ -449,10 +478,18 @@ export default {
 		message(text, error) {
 			this.msg = text;
 			this.msgError = !!error;
+			this.refused = null;
+		},
+		// a failed action: a refusal (no session / role) is a calm note of its cause, never the red "could not" line
+		fail(prefix, e, action) {
+			if (!refusalCauseNow(e)) return this.message(prefix + (e.message || e), true);
+			this.message('', false);
+			this.refused = { error: e, action };
 		},
 		async save() {
 			this.saving = true;
 			this.msg = null;
+			this.refused = null;
 			try {
 				const r = await this.lightsApi('save', { config: this.form });
 				if (!r.ok) {
@@ -465,7 +502,7 @@ export default {
 				}
 				this.message(T.saved, false);
 			} catch (e) {
-				this.message(T.cantSave + (e.message || e), true);
+				this.fail(T.cantSave, e, 'plugins.WorkshopLights.lights.action_save');
 			} finally {
 				this.saving = false;
 			}
@@ -473,6 +510,7 @@ export default {
 		discard() {
 			this.form = copy(this.saved);
 			this.msg = null;
+			this.refused = null;
 		},
 		// double tap: the first arms, the second does it (4 s)
 		arm(that, fn) {
@@ -550,7 +588,7 @@ export default {
 				this.form.work_light.scene = r.config.work_light.scene;
 				this.saved.work_light.scene = r.config.work_light.scene;
 			} catch (e) {
-				this.message(T.cantApply + (refusalText(e, ts('lock_signed_out')) || e.message || e), true);
+				this.fail(T.cantApply, e, 'plugins.WorkshopLights.lights.action_apply');
 			}
 		},
 		// export: the whole profile as a file of the exchange standard (envelope of data-exchange.js)

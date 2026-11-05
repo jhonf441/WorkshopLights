@@ -3,9 +3,9 @@
 		<!-- ===================== basic: size, output and checks ===================== -->
 		<template v-if="part === 'basic'">
 			<div class="d-flex align-center flex-wrap mb-2" style="gap:12px">
-				<v-text-field v-model.number="form.led_start" type="number" min="0" :label="t.lightingLeds" :hint="t.lightingLedsHelp" persistent-hint dense outlined style="max-width:200px" />
-				<v-text-field v-model.number="form.led_count" type="number" min="1" :label="t.statusLeds" :hint="t.statusLedsHelp" persistent-hint dense outlined style="max-width:200px" />
-				<v-text-field v-model.number="form.led_strip" type="number" min="0" max="9" :label="t.outputNumber" :hint="outputHint" persistent-hint dense outlined style="max-width:220px" />
+				<wf-field id="lf-1" :label="t.lightingLeds" style="max-width:200px"><template #help><help-tip :title="t.lightingLeds">{{ t.lightingLedsHelp }}</help-tip></template><v-text-field id="lf-1" v-model.number="form.led_start" type="number" min="0" dense outlined hide-details :aria-label="t.lightingLeds" /></wf-field>
+				<wf-field id="lf-2" :label="t.statusLeds" style="max-width:200px"><template #help><help-tip :title="t.statusLeds">{{ t.statusLedsHelp }}</help-tip></template><v-text-field id="lf-2" v-model.number="form.led_count" type="number" min="1" dense outlined hide-details :aria-label="t.statusLeds" /></wf-field>
+				<wf-field id="lf-3" :label="t.outputNumber" style="max-width:220px"><template #help><help-tip :title="t.outputNumber">{{ outputHint }}</help-tip></template><v-text-field id="lf-3" v-model.number="form.led_strip" type="number" min="0" max="9" dense outlined hide-details :aria-label="t.outputNumber" /></wf-field>
 			</div>
 
 			<div class="group-title mt-3"><v-icon small class="mr-1">mdi-raspberry-pi</v-icon>{{ $t('plugins.WorkshopLights.stripZones.out_title') }}</div>
@@ -158,6 +158,8 @@ import i18n from '../../i18n'
 
 import ColorRgbw from './ColorRgbw.vue'
 import zonesMixin from './zones-mixin.js'
+import HelpTip from './HelpTip.vue' // vue/_shared36
+import WfField from './WfField.vue' // vue/_shared36
 
 // Every user-visible text of this component (and the ones the zones mixin uses) is here.
 const T = {
@@ -233,7 +235,7 @@ const T = {
 };
 
 export default {
-	components: { ColorRgbw },
+	components: { WfField, HelpTip, ColorRgbw },
 	mixins: [zonesMixin],
 	props: {
 		// 'basica': size, output and checks of the strip; 'order': zones, order, status zone, extra strips

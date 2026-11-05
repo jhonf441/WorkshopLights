@@ -1,5 +1,17 @@
 # WorkshopLights -- historial de versiones
 
+## 2.8.20 -- 2026-11-05
+
+- Session state, refusals and notices unified; errors kept as objects; 403 names the action
+
+## 2.8.19 -- 2026-11-05
+
+- Session state, refusals and notices unified; errors kept as objects; 403 names the action
+
+## 2.8.18 -- 2026-11-05
+
+- Session state, refusals and notices unified; errors kept as objects; 403 names the action
+
 ## 2.8.17 -- 2026-11-05
 
 - Darker primary button hover, Workbench save label, generic RS485 notes

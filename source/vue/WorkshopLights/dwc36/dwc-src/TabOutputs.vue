@@ -7,7 +7,7 @@
 			<v-card-text>
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-led-strip-variant</v-icon>{{ t.stripTitle }}</div>
 				<div class="text-caption text-faint mb-2">{{ t.stripWhat }}</div>
-				<v-switch v-model="form.strip.present" :label="t.stripSwitch" :hint="t.stripSwitchHelp" persistent-hint dense class="mt-0 mb-3" />
+				<div class="help-tip-row"><v-switch v-model="form.strip.present" dense class="mt-0 mb-3" hide-details :label="t.stripSwitch" /><help-tip :title="t.stripSwitch">{{ t.stripSwitchHelp }}</help-tip></div>
 				<strip-zones v-if="form.strip.present" part="basic" />
 				<v-alert v-else dense outlined type="info" class="mb-0">{{ t.noStripInfo }}</v-alert>
 			</v-card-text>
@@ -49,8 +49,8 @@
 
 					<div class="group-title mt-4">{{ t.thresholds }}</div>
 					<div class="d-flex flex-wrap" style="gap:12px">
-						<v-text-field v-model.number="form.leds_board.vin_min" type="number" step="0.5" min="0" suffix="V" :label="t.vinMin" :hint="t.vinMinHelp" persistent-hint dense outlined style="max-width:260px" />
-						<v-text-field v-model.number="form.leds_board.v12_min" type="number" step="0.5" min="0" suffix="V" :label="t.v12Min" :hint="t.v12MinHelp" persistent-hint dense outlined style="max-width:260px" />
+						<wf-field id="lf-13" :label="t.vinMin" style="max-width:260px"><template #help><help-tip :title="t.vinMin">{{ t.vinMinHelp }}</help-tip></template><v-text-field id="lf-13" v-model.number="form.leds_board.vin_min" type="number" step="0.5" min="0" suffix="V" dense outlined hide-details :aria-label="t.vinMin" /></wf-field>
+						<wf-field id="lf-14" :label="t.v12Min" style="max-width:260px"><template #help><help-tip :title="t.v12Min">{{ t.v12MinHelp }}</help-tip></template><v-text-field id="lf-14" v-model.number="form.leds_board.v12_min" type="number" step="0.5" min="0" suffix="V" dense outlined hide-details :aria-label="t.v12Min" /></wf-field>
 					</div>
 
 					<v-select
@@ -58,10 +58,10 @@
 						dense outlined hide-details class="mt-3" style="max-width:620px"
 					/>
 
-					<v-select
-						v-if="lights.stripPresent" v-model="form.leds_board.with_lighting" :items="withLightingItems" :label="$t('plugins.WorkshopLights.tabOutputs.with_lighting')"
-						:hint="$t('plugins.WorkshopLights.tabOutputs.with_lighting_help')" persistent-hint dense outlined class="mt-3" style="max-width:520px"
-					/>
+					<wf-field v-if="lights.stripPresent" id="lf-with-lighting" :label="$t('plugins.WorkshopLights.tabOutputs.with_lighting')" class="mt-3" style="max-width:520px">
+						<template #help><help-tip :title="$t('plugins.WorkshopLights.tabOutputs.with_lighting')">{{ $t('plugins.WorkshopLights.tabOutputs.with_lighting_help') }}</help-tip></template>
+						<v-select id="lf-with-lighting" v-model="form.leds_board.with_lighting" :items="withLightingItems" :aria-label="$t('plugins.WorkshopLights.tabOutputs.with_lighting')" dense outlined hide-details />
+					</wf-field>
 					<div v-if="lights.stripPresent" class="d-flex align-center mt-3" style="max-width:420px">
 						<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.brightness }}</span>
 						<v-slider v-model="form.leds_board.brightness" min="1" max="255" hide-details thumb-label dense />
@@ -102,6 +102,7 @@ import HelpTip from './HelpTip.vue' // vue/_shared36
 import { BOARD_LEDS } from './lights-shared.js'
 import { rgbwCss } from './color.js'
 import { pluginActive } from './workshop-ids.js' // the side bar is another plugin: nothing about it when it is absent
+import WfField from './WfField.vue' // vue/_shared36
 
 // Every user-visible text of this component is here.
 const T = {
@@ -146,7 +147,7 @@ const T = {
 };
 
 export default {
-	components: { StripZones, StateBadge, HelpTip },
+	components: { WfField, StripZones, StateBadge, HelpTip },
 	inject: ['lights'],
 	data() {
 		return { t: T };

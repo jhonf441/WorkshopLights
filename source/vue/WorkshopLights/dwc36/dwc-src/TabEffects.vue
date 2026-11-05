@@ -56,7 +56,7 @@
 			<v-card-text>
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-shimmer</v-icon>{{ t.useTitle }}</div>
 				<div class="text-caption text-faint mb-2">{{ t.useWhat }}</div>
-				<v-switch v-if="hasJog" v-model="form.effects.jog_free_always" :label="t.jogAlways" :hint="t.jogAlwaysHelp" persistent-hint dense class="mt-0" />
+				<div class="help-tip-row"><v-switch v-if="hasJog" v-model="form.effects.jog_free_always" dense class="mt-0" hide-details :label="t.jogAlways" /><help-tip :title="t.jogAlways">{{ t.jogAlwaysHelp }}</help-tip></div>
 			</v-card-text>
 		</v-card>
 	</div>
@@ -69,6 +69,7 @@ import i18n from '../../i18n'
 
 import ColorRgbw from './ColorRgbw.vue'
 import { pluginActive } from './workshop-ids.js' // the jog is another plugin: nothing about it when it is absent
+import HelpTip from './HelpTip.vue' // vue/_shared36
 
 // Every user-visible text of this component is here.
 const T = {
@@ -100,7 +101,7 @@ const T = {
 };
 
 export default {
-	components: { ColorRgbw },
+	components: { HelpTip, ColorRgbw },
 	inject: ['lights'],
 	data() {
 		return { t: T };

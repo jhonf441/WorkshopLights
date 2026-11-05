@@ -36,6 +36,9 @@
 		"emergency_stop": "Parada de emergencia"
 	},
 	"lights": {
+		"action_read": "Leer la configuración de las luces",
+		"action_save": "Guardar la configuración de las luces",
+		"action_apply": "Aplicar las luces",
 		"that_scene_does_not_exist": "Esa escena no existe.",
 		"that_state_does_not_exist": "Ese estado no existe.",
 		"this_machine_has_no_led_strip": "Esta máquina no tiene tira de LEDs: no hay nada que mandar a la placa.",
@@ -530,7 +533,6 @@
 		"service_not_running": "no está en marcha (Ajustes > Complementos)",
 		"service_sign_in": "hace falta iniciar sesión para comprobarlo",
 		"service_role": "tu rol no puede comprobarlo: hace falta técnico",
-		"locked": "Sin sesión: inicia sesión para crear o cambiar archivos desde aquí.",
 		"row_strip": "Tira de LEDs",
 		"row_strip_tip": "Es opcional. Si tu máquina no tiene tira, apágala en la pestaña Salidas y esta fila queda en gris.",
 		"strip_on": "activada en la configuración",

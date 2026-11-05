@@ -1,9 +1,6 @@
 <template>
 	<div>
-		<details class="wf-more">
-			<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-		<div class="text-body-2 text-faint mb-3">{{ t.intro }}</div>
-		</details>
+		<help-guide class="mb-3"><p class="mb-0">{{ t.intro }}</p></help-guide>
 
 		<!-- ===== Strip order and zones ===== -->
 		<v-card v-if="lights.stripPresent" class="mb-3">
@@ -98,7 +95,7 @@
 				<div class="d-flex flex-wrap align-center" style="gap:12px">
 					<v-btn small outlined @click="lights.exportProfile()"><v-icon small left>mdi-download</v-icon>{{ t.export }}</v-btn>
 					<v-btn small outlined @click="lights.importProfile(withHardware)"><v-icon small left>mdi-upload</v-icon>{{ t.import }}</v-btn>
-					<v-checkbox v-model="withHardware" :label="t.withHardware" :hint="t.withHardwareHelp" persistent-hint dense class="mt-0 pt-0" />
+					<div class="help-tip-row"><v-checkbox v-model="withHardware" dense class="mt-0 pt-0" hide-details :label="t.withHardware" /><help-tip :title="t.withHardware">{{ t.withHardwareHelp }}</help-tip></div>
 				</div>
 			</v-card-text>
 		</v-card>
@@ -114,6 +111,7 @@ import StripZones from './StripZones.vue'
 import PiOutputs from './PiOutputs.vue'
 import HelpTip from './HelpTip.vue' // vue/_shared36
 import { api } from './workshop-api.js'
+import HelpGuide from './HelpGuide.vue' // vue/_shared36
 
 // Every user-visible text of this component is here.
 const VIEW_KEY = 'workshopLightsPanelView'
@@ -145,7 +143,7 @@ const T = {
 };
 
 export default {
-	components: { StripZones, PiOutputs, HelpTip },
+	components: { HelpGuide, StripZones, PiOutputs, HelpTip },
 	inject: ['lights'],
 	data() {
 		return { t: T, sel: null, withHardware: false, onlyActive: false, view: this.readView() };

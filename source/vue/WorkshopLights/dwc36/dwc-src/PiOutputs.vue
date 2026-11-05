@@ -3,7 +3,8 @@
 		<!-- pins of this Pi: shown with their state and reason while none can drive a strip (never hidden) -->
 		<div v-if="summary !== 'some'" class="mb-3">
 			<div class="group-title">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_pins_title') }}</div>
-			<div v-if="summary === 'unread'" class="text-caption text-faint">{{ readRefused || (readError ? $t('plugins.WorkshopLights.tabAdvanced.pi_read_error') : $t('plugins.WorkshopLights.tabAdvanced.pi_pins_loading')) }}</div>
+			<lock-reason v-if="summary === 'unread' && readKind" :kind="readKind" need="technician" :action="$t('plugins.WorkshopLights.lights.action_read')" />
+			<div v-else-if="summary === 'unread'" class="text-caption text-faint">{{ readError ? $t('plugins.WorkshopLights.tabAdvanced.pi_read_error') : $t('plugins.WorkshopLights.tabAdvanced.pi_pins_loading') }}</div>
 			<ul v-else-if="piPins.length" class="text-body-2 pi-list">
 				<li v-for="p in piPins" :key="p.gpio"><b>GPIO{{ p.gpio }}</b> - {{ p.func }}: {{ pinText(p, []) }}</li>
 			</ul>
@@ -50,18 +51,30 @@ import i18n from '../../i18n'
 
 'use strict'
 
-import { refusalText } from './refusal.js';
+import { refusalCauseNow } from './session-refusal.js'; // a refusal told by its cause (vue/_shared36)
+import { roleMixin } from './role-mixin.js'; // vue/_shared36
+import LockReason from './LockReason.vue'; // vue/_shared36
 import { ts } from './shared-t.js';
 import { pinState, stripRows, pinsOfOthers, pinsSummary, pinToSelect, canEnable } from './pi-pins.js';
 
 // The output of each strip (main and extra): the Duet board or a pin of the Pi. Same data model and same save as always:
 // strip.output = { tipo: 'duet' | 'pi', pin, orden, brillo }; the page saves it.
 export default {
+	components: { LockReason },
+	mixins: [roleMixin],
+	// the pins of the Pi are read with the session: another person reads them again
+	sessionData: ['piPins', 'piStrips', 'piRead', 'readError'],
+	sessionErrors: ['readError'], // what a refusal or a failure said: cleared when the person signs in, out or changes role (role-mixin.js)
 	inject: ['lights'],
 	data() {
-		return { piPins: [], piStrips: [], piRead: false, readError: false, readRefused: '', testing: null };
+		return { piPins: [], piStrips: [], piRead: false, readError: null, testing: null };
 	},
 	computed: {
+		// 'session' | 'role' when the read was refused, else '': computed from the error, so it follows who is signed in
+		readKind() {
+			void this.identityTick;
+			return refusalCauseNow(this.readError);
+		},
 		form() {
 			return this.lights.form;
 		},
@@ -76,6 +89,9 @@ export default {
 		this.piLoad();
 	},
 	methods: {
+		onSessionChange() {
+			this.piLoad();
+		},
 		// pins of the Pi with what each one can do (read only)
 		async piLoad() {
 			try {
@@ -83,13 +99,11 @@ export default {
 				this.piPins = r.pins || [];
 				this.piStrips = r.strips || [];
 				this.piRead = true;
-				this.readError = false;
-				this.readRefused = '';
+				this.readError = null;
 			} catch (e) {
 				this.piPins = [];
 				// a refusal says its cause (session / role) instead of "reading..." forever or "could not read"
-				this.readRefused = refusalText(e, ts('lock_signed_out'), ts('err_role'));
-				this.readError = !this.readRefused;
+				this.readError = e; // the error itself: whether it is a refusal and what it says is computed (readKind), so it follows the role and the language
 			}
 		},
 		name(r) {

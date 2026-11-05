@@ -11,10 +11,7 @@
 					<span><b>{{ t.machine }}:</b> {{ statusName }}</span>
 					<span v-if="lights.stripPresent && lights.info.night && lights.info.night.on"><v-icon small>mdi-weather-night</v-icon> {{ t.nightOn }} ({{ lights.info.night.level }} %)</span>
 				</div>
-							<details class="wf-more">
-					<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-					<p class="text-faint">{{ $t('plugins.WorkshopLights.lights.here_you_decide_how_what_the') }}</p>
-				</details>
+							<help-guide class="mb-3"><p class="mb-0">{{ $t('plugins.WorkshopLights.lights.here_you_decide_how_what_the') }}</p></help-guide>
 </v-card-text>
 		</v-card>
 
@@ -70,14 +67,14 @@
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</div>
 				<div class="text-caption text-faint mb-2">{{ t.lightHelp }}</div>
 				<div class="d-flex flex-wrap align-center" style="gap:12px">
-					<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" dense hide-details class="mt-0" :loading="lights.busyLight" :disabled="!lights.canDo('light.set')" :title="lights.lockTextOp('light.set', 'operator')" @change="lights.changeLight" />
+					<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" dense hide-details class="mt-0" :loading="lights.busyLight" :disabled="!lights.canDo('light.set')" @change="lights.changeLight" />
 					<!-- the same switch as in the Lighting tab: both can be turned on and off from here -->
-					<v-switch :input-value="lights.statusAuto" :label="$t('plugins.WorkshopLights.tabLighting.automatic_status_lights')" dense hide-details class="mt-0" :loading="lights.busyState" :disabled="!lights.canDo('statuslight.set')" :title="lights.lockTextOp('statuslight.set', 'operator')" @change="lights.changeState" />
-					<v-btn v-for="s in scenes" :key="s.id" small outlined :disabled="!lights.canDo('lights.scene')" :title="lights.lockTextOp('lights.scene', 'operator')" :color="lights.form.work_light.scene === s.id ? 'primary' : ''" @click="lights.applyScene(s)">
+					<v-switch :input-value="lights.statusAuto" :label="$t('plugins.WorkshopLights.tabLighting.automatic_status_lights')" dense hide-details class="mt-0" :loading="lights.busyState" :disabled="!lights.canDo('statuslight.set')" @change="lights.changeState" />
+					<v-btn v-for="s in scenes" :key="s.id" small outlined :disabled="!lights.canDo('lights.scene')" :color="lights.form.work_light.scene === s.id ? 'primary' : ''" @click="lights.applyScene(s)">
 						<span class="chip-dot" :style="{ backgroundColor: hex(s.color) }" />{{ s.name }}
 					</v-btn>
 				</div>
-				<div v-if="lockNote" class="text-caption text-faint mt-2"><v-icon x-small left>mdi-lock-outline</v-icon>{{ lockNote }}</div>
+				<lock-reason op="light.set" need="operator" class="mt-2" />
 				<div v-if="lights.info.auto_off_min != null" class="text-caption text-faint mt-2">{{ t.autoOffIn }} {{ lights.info.auto_off_min }} min</div>
 			</v-card-text>
 		</v-card>
@@ -131,6 +128,8 @@ import StateBadge from './StateBadge.vue'
 import LedStrip from './LedStrip.vue'
 import { effectClass, rgbwHex } from './lights-shared.js'
 import { pluginActive } from './workshop-ids.js' // the side bar is another plugin: nothing about it when it is absent
+import HelpGuide from './HelpGuide.vue' // vue/_shared36
+import LockReason from './LockReason.vue' // vue/_shared36
 
 // Every user-visible text of this component is here.
 const T = {
@@ -184,7 +183,7 @@ const T = {
 };
 
 export default {
-	components: { StateBadge, LedStrip: LedStrip },
+	components: { LockReason, HelpGuide, StateBadge, LedStrip: LedStrip },
 	inject: ['lights'],
 	data() {
 		return { t: T };
@@ -213,10 +212,6 @@ export default {
 		board() {
 			const b = this.lights.info.board;
 			return Array.isArray(b) ? b : [];
-		},
-		// one sentence for the three controls above when they are locked (they all need the operator)
-		lockNote() {
-			return this.lights.lockTextOp('light.set', 'operator');
 		},
 		scenes() {
 			return (this.lights.form.work_light && this.lights.form.work_light.scenes) || [];

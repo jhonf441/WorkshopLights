@@ -1,10 +1,7 @@
 <template>
 	<div>
-		<details class="wf-more">
-			<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-		<div class="text-body-2 text-faint mb-3">{{ t.intro }}</div>
-		</details>
-		<v-switch :input-value="lights.statusAuto" :label="t.autoStatus" :hint="t.autoStatusHelp" persistent-hint dense class="mt-0 mb-3" :loading="lights.busyState" @change="lights.changeState" />
+		<help-guide class="mb-3"><p class="mb-0">{{ t.intro }}</p></help-guide>
+		<div class="help-tip-row"><v-switch :input-value="lights.statusAuto" dense class="mt-0 mb-3" :loading="lights.busyState" @change="lights.changeState" hide-details :label="t.autoStatus" /><help-tip :title="t.autoStatus">{{ t.autoStatusHelp }}</help-tip></div>
 
 		<v-alert v-if="lookAlikes.length" dense outlined type="warning" class="mb-3">
 			{{ t.lookAlike }}
@@ -47,11 +44,13 @@
 				</div>
 				<div class="text-caption text-faint mt-1">{{ t.emergencyAlways }}</div>
 				<!-- during a job the strip keeps its colours but not its blinks (each blink phase is a command for the Duet) -->
-				<v-select
-					:value="lights.piPaints ? 'with_effects' : form.effects_in_job" :items="jobEffectsItems" :disabled="lights.piPaints"
-					:label="$t('plugins.WorkshopLights.tabStates.job_effects')" :hint="lights.piPaints ? '' : $t('plugins.WorkshopLights.tabStates.job_effects_help' + (hasJog ? '' : '_no_jog'))"
-					:persistent-hint="!lights.piPaints" dense outlined class="mt-3" style="max-width:520px" @change="form.effects_in_job = $event"
-				/>
+				<wf-field id="lf-job-effects" :label="$t('plugins.WorkshopLights.tabStates.job_effects')" class="mt-3" style="max-width:520px">
+					<template v-if="!lights.piPaints" #help><help-tip :title="$t('plugins.WorkshopLights.tabStates.job_effects')">{{ $t('plugins.WorkshopLights.tabStates.job_effects_help' + (hasJog ? '' : '_no_jog')) }}</help-tip></template>
+					<v-select
+						id="lf-job-effects" :value="lights.piPaints ? 'with_effects' : form.effects_in_job" :items="jobEffectsItems" :disabled="lights.piPaints"
+						:aria-label="$t('plugins.WorkshopLights.tabStates.job_effects')" dense outlined hide-details @change="form.effects_in_job = $event"
+					/>
+				</wf-field>
 			</v-card-text>
 		</v-card>
 
@@ -136,6 +135,9 @@ import ColorRgbw from './ColorRgbw.vue'
 import LedStrip from './LedStrip.vue'
 import { copy, effectClass, rgbwHex } from './lights-shared.js'
 import { pluginActive, pathExists } from './workshop-ids.js' // states that belong to other plugins are not listed without them
+import HelpTip from './HelpTip.vue' // vue/_shared36
+import WfField from './WfField.vue' // vue/_shared36
+import HelpGuide from './HelpGuide.vue' // vue/_shared36
 
 // Every user-visible text of this component is here (one place, to ease the
 // later move to translation keys).
@@ -220,7 +222,7 @@ const T = {
 };
 
 export default {
-	components: { ColorRgbw, LedStrip: LedStrip },
+	components: { HelpGuide, WfField, HelpTip, ColorRgbw, LedStrip: LedStrip },
 	inject: ['lights'],
 	data() {
 		return { t: T, applyingMode: null, turnIdx: 0, turnTimer: null };

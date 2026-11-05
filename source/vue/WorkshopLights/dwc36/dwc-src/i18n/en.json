@@ -36,6 +36,9 @@
 		"emergency_stop": "Emergency stop"
 	},
 	"lights": {
+		"action_read": "Reading the lights configuration",
+		"action_save": "Saving the lights configuration",
+		"action_apply": "Applying the lights",
 		"that_scene_does_not_exist": "That scene does not exist.",
 		"that_state_does_not_exist": "That state does not exist.",
 		"this_machine_has_no_led_strip": "This machine has no LED strip: there is nothing to send to the board.",
@@ -530,7 +533,6 @@
 		"service_not_running": "is not running (Settings > Plugins)",
 		"service_sign_in": "needs you to sign in to be checked",
 		"service_role": "your role cannot check it: a technician is needed",
-		"locked": "Not signed in: sign in to create or change files from here.",
 		"row_strip": "LED strip",
 		"row_strip_tip": "It is optional. If your machine has no strip, switch it off in the Outputs tab and this row turns grey.",
 		"strip_on": "enabled in the configuration",
