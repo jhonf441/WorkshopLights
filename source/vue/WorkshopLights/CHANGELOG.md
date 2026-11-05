@@ -1,5 +1,9 @@
 # WorkshopLights -- historial de versiones
 
+## 2.8.17 -- 2026-11-05
+
+- Darker primary button hover, Workbench save label, generic RS485 notes
+
 ## 2.8.16 -- 2026-11-04
 
 - Sign out no longer reopens the PIN dialog
