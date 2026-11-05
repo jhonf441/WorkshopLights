@@ -5,7 +5,7 @@
 		<!-- ===== Header: always visible. One row of equal chips (2026-11-03, banner-state.js): the health of the page (page-header),
 		     the light state (a dot of its color + a short phrase, no border: a state of the bar) and the outputs pill ("Outputs: 2 of 3",
 		     a menu with the three outputs, each with its state and its line of help), then the start-up chip. ===== -->
-		<page-header :lead="t.lead" icon="mdi-led-strip-variant" :title="t.title" :loading="!saved && !msgError" :reasons="saved ? [] : [{ level: 'warn', text: t.cantRead }]">
+		<page-header :lead="t.lead" icon="mdi-led-strip-variant" :title="t.title" :loading="!saved && !msgError && !readRefused" :reasons="saved ? [] : [{ level: 'warn', text: readRefused || t.cantRead }]">
 			<v-chip small outlined class="wf-state-chip" :style="{ '--wf-dotc': bannerDot, '--wf-dotd': 'inline-block' }" :title="bannerStateHelp">{{ bannerStateText }}</v-chip>
 			<v-menu offset-y :close-on-content-click="false">
 				<template v-slot:activator="{ on, attrs }">
@@ -27,6 +27,10 @@
 		</page-header>
 
 
+		<!-- the page could not be read because of the session or the role: said here (the save bar is for technicians only) -->
+		<div v-if="readRefused && !saved" class="text-body-2 px-2 py-1 lights-read-refused" role="note"><v-icon small left>mdi-lock-outline</v-icon>{{ readRefused }}</div>
+		<hidden-note :sections="allTabs" />
+
 		<!-- ===== Tabs ===== -->
 		<div class="st-layout mb-3">
 		<side-tabs v-model="tab" :items="tabs" />
@@ -40,6 +44,9 @@
 		<tab-advanced v-else-if="tab === 'advanced'" />
 		</div>
 		</div>
+
+		<!-- a message of someone who cannot see the save bar (a refused scene, for example) -->
+		<div v-if="msg && msgError && !atLeast('technician')" class="text-body-2 error--text px-2 py-1" role="alert">{{ msg }}</div>
 
 		<!-- ===== Save ===== -->
 		<div v-if="atLeast('technician') && (changed || msg)" class="save-bar">
@@ -65,6 +72,8 @@ import StartupPanel from './StartupPanel.vue' // start-up card (vue/_shared)
 import PageHeader from './PageHeader.vue' // header of every page (vue/_shared)
 import { rowsLights } from './startup-rows.js'
 import SideTabs from './SideTabs.vue'
+import HiddenNote from './HiddenNote.vue' // the quiet line for the tabs this role does not see (vue/_shared36)
+import { refusalText } from './refusal.js'
 import { mapActions } from 'vuex'
 import { api } from './workshop-api.js'
 import { errorKind, errorText } from './friendly-error.js'
@@ -182,7 +191,7 @@ const FORM_EMPTY = {
 
 export default {
 	mixins: [roleMixin],
-	components: { PageHeader, SideTabs, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
+	components: { PageHeader, SideTabs, HiddenNote, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
 	provide() {
 		// the tabs read and change the page through this object
 		return { lights: this };
@@ -199,6 +208,7 @@ export default {
 			saving: false,
 			msg: null,
 			msgError: false,
+			readRefused: '', // the sentence of the cause when lights.get was refused (no session / role); '' otherwise
 			countN: 37,
 			stripEnlarged: false,
 			stripSel: null, // null = main strip; number = index in form.strips_extra
@@ -258,18 +268,13 @@ export default {
 				ledsBoard: !!(g && g.leds_board && g.leds_board.active)
 			});
 		},
+		allTabs() {
+			return this.tabsDefinition();
+		},
 		tabs() {
 			// F3-V (2026-10-21): the summary (state of the strip, work light and scenes) is for everybody; the settings tabs are a
 			// technician's; Advanced (strip order, Pi pins, board panel, M950) is the administrator's
-			const all = [
-				{ id: 'summary', label: T.tabSummary, icon: 'mdi-view-dashboard-outline' },
-				{ id: 'outputs', label: T.tabOutputs, icon: 'mdi-export-variant', min: 'technician' },
-				{ id: 'lighting', label: T.tabLighting, icon: 'mdi-lightbulb-on-outline', min: 'technician' },
-				{ id: 'states', label: T.tabStates, icon: 'mdi-traffic-light', min: 'technician' },
-				{ id: 'colors', label: T.tabColors, icon: 'mdi-palette', min: 'technician' },
-				{ id: 'effects', label: T.tabEffects, icon: 'mdi-animation-play', min: 'technician' },
-				{ id: 'advanced', label: T.tabAdvanced, icon: 'mdi-tune', min: 'admin' }
-			];
+			const all = this.tabsDefinition();
 			const shown = visibleItems(all, op => this.canDo(op));
 			// without an LED strip there is no work light to control
 			return this.stripPresent ? shown : shown.filter(k => k.id !== 'lighting');
@@ -372,6 +377,21 @@ export default {
 	},
 	methods: {
 		...mapActions('machine', ['sendCode']),
+		tabsDefinition() {
+			return [
+				{ id: 'summary', label: T.tabSummary, icon: 'mdi-view-dashboard-outline' },
+				{ id: 'outputs', label: T.tabOutputs, icon: 'mdi-export-variant', min: 'technician' },
+				{ id: 'lighting', label: T.tabLighting, icon: 'mdi-lightbulb-on-outline', min: 'technician' },
+				{ id: 'states', label: T.tabStates, icon: 'mdi-traffic-light', min: 'technician' },
+				{ id: 'colors', label: T.tabColors, icon: 'mdi-palette', min: 'technician' },
+				{ id: 'effects', label: T.tabEffects, icon: 'mdi-animation-play', min: 'technician' },
+				{ id: 'advanced', label: T.tabAdvanced, icon: 'mdi-tune', min: 'admin' }
+			];
+		},
+		// the person signed in or out, or the role changed: read the configuration again (it may have been refused before)
+		onSessionChange() {
+			this.load();
+		},
 		tabSaved() {
 			try {
 				const v = window.localStorage.getItem('lightsTab');
@@ -412,12 +432,18 @@ export default {
 			try {
 				const r = await this.lightsApi('get');
 				if (r.ok) {
+					this.readRefused = '';
 					this.applyResponse(r);
 				}
 			} catch (e) {
-				// without a session the reason is the sign-in, not a service that is down
-				// a missing sign-in is said by the sign-in chip of the page bar, not by a second red line here
-				if (errorKind(e) !== 'login') this.message(errorKind(e) === 'other' ? T.cantRead : errorText(e, ts), true);
+				// a refusal (no session / role) is said with its cause and stops the loading; only a real failure says "cannot read"
+				const refused = refusalText(e, ts('lock_signed_out'), ts('err_role'));
+				if (refused) {
+					this.readRefused = refused;
+				} else {
+					this.readRefused = '';
+					this.message(errorKind(e) === 'other' ? T.cantRead : errorText(e, ts), true);
+				}
 			}
 		},
 		message(text, error) {
@@ -524,7 +550,7 @@ export default {
 				this.form.work_light.scene = r.config.work_light.scene;
 				this.saved.work_light.scene = r.config.work_light.scene;
 			} catch (e) {
-				this.message(T.cantApply + (e.message || e), true);
+				this.message(T.cantApply + (refusalText(e, ts('lock_signed_out')) || e.message || e), true);
 			}
 		},
 		// export: the whole profile as a file of the exchange standard (envelope of data-exchange.js)

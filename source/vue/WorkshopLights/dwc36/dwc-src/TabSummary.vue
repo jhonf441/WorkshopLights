@@ -70,13 +70,14 @@
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</div>
 				<div class="text-caption text-faint mb-2">{{ t.lightHelp }}</div>
 				<div class="d-flex flex-wrap align-center" style="gap:12px">
-					<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" dense hide-details class="mt-0" :loading="lights.busyLight" :disabled="!lights.canDo('light.set')" @change="lights.changeLight" />
+					<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" dense hide-details class="mt-0" :loading="lights.busyLight" :disabled="!lights.canDo('light.set')" :title="lights.lockTextOp('light.set', 'operator')" @change="lights.changeLight" />
 					<!-- the same switch as in the Lighting tab: both can be turned on and off from here -->
-					<v-switch :input-value="lights.statusAuto" :label="$t('plugins.WorkshopLights.tabLighting.automatic_status_lights')" dense hide-details class="mt-0" :loading="lights.busyState" :disabled="!lights.canDo('statuslight.set')" @change="lights.changeState" />
-					<v-btn v-for="s in scenes" :key="s.id" small outlined :disabled="!lights.canDo('lights.scene')" :color="lights.form.work_light.scene === s.id ? 'primary' : ''" @click="lights.applyScene(s)">
+					<v-switch :input-value="lights.statusAuto" :label="$t('plugins.WorkshopLights.tabLighting.automatic_status_lights')" dense hide-details class="mt-0" :loading="lights.busyState" :disabled="!lights.canDo('statuslight.set')" :title="lights.lockTextOp('statuslight.set', 'operator')" @change="lights.changeState" />
+					<v-btn v-for="s in scenes" :key="s.id" small outlined :disabled="!lights.canDo('lights.scene')" :title="lights.lockTextOp('lights.scene', 'operator')" :color="lights.form.work_light.scene === s.id ? 'primary' : ''" @click="lights.applyScene(s)">
 						<span class="chip-dot" :style="{ backgroundColor: hex(s.color) }" />{{ s.name }}
 					</v-btn>
 				</div>
+				<div v-if="lockNote" class="text-caption text-faint mt-2"><v-icon x-small left>mdi-lock-outline</v-icon>{{ lockNote }}</div>
 				<div v-if="lights.info.auto_off_min != null" class="text-caption text-faint mt-2">{{ t.autoOffIn }} {{ lights.info.auto_off_min }} min</div>
 			</v-card-text>
 		</v-card>
@@ -212,6 +213,10 @@ export default {
 		board() {
 			const b = this.lights.info.board;
 			return Array.isArray(b) ? b : [];
+		},
+		// one sentence for the three controls above when they are locked (they all need the operator)
+		lockNote() {
+			return this.lights.lockTextOp('light.set', 'operator');
 		},
 		scenes() {
 			return (this.lights.form.work_light && this.lights.form.work_light.scenes) || [];

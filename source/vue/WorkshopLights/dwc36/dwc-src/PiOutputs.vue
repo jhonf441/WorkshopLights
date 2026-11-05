@@ -8,7 +8,7 @@
 		<!-- pins of this Pi: shown with their state and reason while none can drive a strip (never hidden) -->
 		<div v-if="summary !== 'some'" class="mb-3">
 			<div class="group-title">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_pins_title') }}</div>
-			<div v-if="summary === 'unread'" class="text-caption text-faint">{{ readError ? $t('plugins.WorkshopLights.tabAdvanced.pi_read_error') : $t('plugins.WorkshopLights.tabAdvanced.pi_pins_loading') }}</div>
+			<div v-if="summary === 'unread'" class="text-caption text-faint">{{ readRefused || (readError ? $t('plugins.WorkshopLights.tabAdvanced.pi_read_error') : $t('plugins.WorkshopLights.tabAdvanced.pi_pins_loading')) }}</div>
 			<ul v-else-if="piPins.length" class="text-body-2 pi-list">
 				<li v-for="p in piPins" :key="p.gpio"><b>GPIO{{ p.gpio }}</b> - {{ p.func }}: {{ pinText(p, []) }}</li>
 			</ul>
@@ -55,6 +55,8 @@ import i18n from '../../i18n'
 
 'use strict'
 
+import { refusalText } from './refusal.js';
+import { ts } from './shared-t.js';
 import { pinState, stripRows, pinsOfOthers, pinsSummary, pinToSelect, canEnable } from './pi-pins.js';
 
 // The output of each strip (main and extra): the Duet board or a pin of the Pi. Same data model and same save as always:
@@ -62,7 +64,7 @@ import { pinState, stripRows, pinsOfOthers, pinsSummary, pinToSelect, canEnable 
 export default {
 	inject: ['lights'],
 	data() {
-		return { piPins: [], piStrips: [], piRead: false, readError: false, testing: null };
+		return { piPins: [], piStrips: [], piRead: false, readError: false, readRefused: '', testing: null };
 	},
 	computed: {
 		form() {
@@ -87,9 +89,12 @@ export default {
 				this.piStrips = r.strips || [];
 				this.piRead = true;
 				this.readError = false;
+				this.readRefused = '';
 			} catch (e) {
 				this.piPins = [];
-				this.readError = true;
+				// a refusal says its cause (session / role) instead of "reading..." forever or "could not read"
+				this.readRefused = refusalText(e, ts('lock_signed_out'), ts('err_role'));
+				this.readError = !this.readRefused;
 			}
 		},
 		name(r) {
