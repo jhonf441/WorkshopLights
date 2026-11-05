@@ -16,11 +16,8 @@
 		<!-- ===== 2. On-screen indicator ===== -->
 		<v-card class="mb-3">
 			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.screenTitle }}</div>
-				<details class="wf-more">
-					<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-				<div class="text-caption text-faint mb-2">{{ t.screenWhat }}</div>
-				</details>
+				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.screenTitle }}</div>
+					<help-tip :title=" t.screenTitle ">{{ t.screenWhat }}</help-tip></div>
 				<state-badge :ind="lights.indicator" />
 				<div class="text-caption text-faint mt-3">{{ t.screenWhere }}</div>
 				<ul class="text-caption text-faint mt-1">
@@ -101,6 +98,7 @@ import i18n from '../../i18n'
 
 import StripZones from './StripZones.vue'
 import StateBadge from './StateBadge.vue'
+import HelpTip from './HelpTip.vue' // vue/_shared36
 import { BOARD_LEDS } from './lights-shared.js'
 import { rgbwCss } from './color.js'
 import { pluginActive } from './workshop-ids.js' // the side bar is another plugin: nothing about it when it is absent
@@ -148,7 +146,7 @@ const T = {
 };
 
 export default {
-	components: { StripZones, StateBadge },
+	components: { StripZones, StateBadge, HelpTip },
 	inject: ['lights'],
 	data() {
 		return { t: T };

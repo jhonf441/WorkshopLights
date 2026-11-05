@@ -1,10 +1,5 @@
 <template>
 	<div>
-		<details class="wf-more">
-			<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-		<div class="text-caption mb-3 text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_section_what') }}</div>
-		</details>
-
 		<!-- pins of this Pi: shown with their state and reason while none can drive a strip (never hidden) -->
 		<div v-if="summary !== 'some'" class="mb-3">
 			<div class="group-title">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_pins_title') }}</div>

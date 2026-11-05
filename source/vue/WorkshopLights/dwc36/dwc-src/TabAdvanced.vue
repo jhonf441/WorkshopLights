@@ -8,11 +8,8 @@
 		<!-- ===== Strip order and zones ===== -->
 		<v-card v-if="lights.stripPresent" class="mb-3">
 			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-swap-horizontal</v-icon>{{ t.orderTitle }}</div>
-				<details class="wf-more">
-					<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-				<div class="text-caption text-faint mb-3">{{ t.orderWhat }}</div>
-				</details>
+				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-swap-horizontal</v-icon>{{ t.orderTitle }}</div>
+					<help-tip :title=" t.orderTitle ">{{ t.orderWhat }}</help-tip></div>
 				<strip-zones part="order" />
 			</v-card-text>
 		</v-card>
@@ -20,7 +17,8 @@
 		<!-- ===== Strip on the Pi: enable it and choose the pin of each strip ===== -->
 		<v-card v-if="lights.stripPresent" class="mb-3">
 			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-raspberry-pi</v-icon>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_section_title') }}</div>
+				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-raspberry-pi</v-icon>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_section_title') }}</div>
+					<help-tip :title="$t('plugins.WorkshopLights.tabAdvanced.pi_section_title')">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_section_what') }}</help-tip></div>
 				<pi-outputs />
 			</v-card-text>
 		</v-card>
@@ -28,11 +26,8 @@
 		<!-- ===== Board signals panel (screens only) ===== -->
 		<v-card class="mb-3">
 			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.panelTitle }}</div>
-				<details class="wf-more">
-					<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-				<div class="text-caption mb-2 text-faint">{{ t.panelWhat }}</div>
-				</details>
+				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.panelTitle }}</div>
+					<help-tip :title="t.panelTitle"><p>{{ t.panelWhat }}</p><p class="mb-0">{{ t.panelLimits }}</p></help-tip></div>
 				<v-switch v-model="form.strip_state.active" :label="t.panelSwitch" dense hide-details class="mt-0" />
 				<template v-if="form.strip_state.active">
 					<div class="group-title mt-3">{{ t.panelShows }}</div>
@@ -82,10 +77,6 @@
 						<div v-if="!groupedShown.length" class="text-body-2 text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.panel_nothing_active') }}</div>
 					</div>
 					<div v-if="read && !read.ok" class="text-caption warning--text mt-1">{{ t.panelNoRead }}</div>
-					<details class="wf-more">
-						<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-					<div class="text-caption text-faint mt-2">{{ t.panelLimits }}</div>
-					</details>
 				</template>
 			</v-card-text>
 		</v-card>
@@ -93,12 +84,9 @@
 		<!-- ===== Fallback ===== -->
 		<v-card class="mb-3">
 			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-shield-check-outline</v-icon>{{ t.fallbackTitle }}</div>
+				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-shield-check-outline</v-icon>{{ t.fallbackTitle }}</div>
+					<help-tip :title="t.fallbackTitle">{{ t.stopping }}</help-tip></div>
 				<div class="text-body-2 text-faint">{{ lights.stripPresent ? t.fallbackStrip : t.fallbackNoStrip }}</div>
-				<details class="wf-more">
-					<summary>{{ $t('plugins.WorkshopLights.common.how_it_works') }}</summary>
-				<div class="text-body-2 text-faint mt-2">{{ t.stopping }}</div>
-				</details>
 			</v-card-text>
 		</v-card>
 
@@ -124,6 +112,7 @@ import i18n from '../../i18n'
 
 import StripZones from './StripZones.vue'
 import PiOutputs from './PiOutputs.vue'
+import HelpTip from './HelpTip.vue' // vue/_shared36
 import { api } from './workshop-api.js'
 
 // Every user-visible text of this component is here.
@@ -156,7 +145,7 @@ const T = {
 };
 
 export default {
-	components: { StripZones, PiOutputs },
+	components: { StripZones, PiOutputs, HelpTip },
 	inject: ['lights'],
 	data() {
 		return { t: T, sel: null, withHardware: false, onlyActive: false, view: this.readView() };
