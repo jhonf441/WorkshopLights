@@ -1,5 +1,11 @@
 # WorkshopLights (Lights and states)
 
+<!-- notice:start -->
+> **Read before installing.** This plugin runs with real permissions on your machine. Read [SECURITY.md](SECURITY.md) and the section **Permissions and what it changes** below: they say what it can do, which files it writes, and what it sends outside your network (nothing, unless you turn a feature on).
+
+> **The Workshop users and roles do not protect DWC itself.** Anyone who can open DWC on your network can send G-code, move the machine, edit `config.g` and upload files, whatever the Workshop roles say: Duet has no roles of its own. Set a DWC password (`M551`) and keep the machine on a network you trust.
+<!-- notice:end -->
+
 
 
 Page `/Plugins/Lights` ("Lights and status"). It controls the LED strip (NeoPixel WS2812 / SK6812) and the status light: what the machine is doing shown as colors and effects on three outputs (the LED strip, the on-screen indicator and the board LEDs), the work light with scenes, colors per mode and per state, start-up animations, and the strip layout (zones, counts, pin).

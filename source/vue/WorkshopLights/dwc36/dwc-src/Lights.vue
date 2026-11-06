@@ -29,13 +29,13 @@
 
 		<!-- the page could not be read because of the session or the role: said here (the save bar is for technicians only) -->
 		<session-notice v-if="readRefused && !saved" :kind="readKind" needed="technician" :action="readAction" />
-		<hidden-note :sections="allTabs" />
 
 		<!-- ===== Tabs ===== -->
 		<div class="st-layout mb-3">
 		<side-tabs v-model="tab" :items="tabs" />
 		<div class="st-body">
-		<tab-summary v-if="tab === 'summary'" />
+		<locked-cover v-if="lockedTab" :needed="lockedTab" />
+		<tab-summary v-else-if="tab === 'summary'" />
 		<tab-outputs v-else-if="tab === 'outputs'" />
 		<tab-lighting v-else-if="tab === 'lighting' && stripPresent" />
 		<tab-states v-else-if="tab === 'states'" />
@@ -47,11 +47,12 @@
 
 		<!-- a message of someone who cannot see the save bar (a refused scene, for example) -->
 		<session-notice v-if="note && refusal && !atLeast('technician')" :kind="refusal" needed="technician" :action="refusedAction" />
-		<div v-else-if="note && msgError && !atLeast('technician')" class="text-body-2 error--text px-2 py-1" role="alert">{{ note }}</div>
+		<session-notice v-else-if="note && msgError && !atLeast('technician')" kind="error" :text="note" />
 
 		<!-- ===== Save ===== -->
 		<div v-if="atLeast('technician') && (changed || note)" class="save-bar">
-			<span v-if="note" class="text-body-2 mr-3" :class="refusal ? '' : msgError ? 'error--text' : 'success--text'">{{ note }}</span>
+			<session-notice v-if="note && refusal" variant="reason" :kind="refusal" needed="technician" :action="refusedAction" class="mr-3" />
+			<span v-else-if="note" class="text-body-2 mr-3" :class="msgError ? 'error--text' : 'success--text'">{{ note }}</span>
 			<span v-else-if="changed" class="text-body-2 warning--text mr-3">{{ t.unsaved }}</span>
 			<v-btn small :disabled="!changed" text class="mr-2" @click="discard()">{{ t.discard }}</v-btn>
 			<span v-if="changed && !numbersOk" class="text-body-2 error--text mr-3">{{ t.checkNumbers }}</span>
@@ -73,7 +74,7 @@ import StartupPanel from './StartupPanel.vue' // start-up card (vue/_shared)
 import PageHeader from './PageHeader.vue' // header of every page (vue/_shared)
 import { rowsLights } from './startup-rows.js'
 import SideTabs from './SideTabs.vue'
-import HiddenNote from './HiddenNote.vue' // the quiet line for the tabs this role does not see (vue/_shared36)
+import LockedCover from './LockedCover.vue' // the cover of a tab the role cannot open (vue/_shared36)
 import { refusalCauseNow, refusalNow } from './session-refusal.js' // a refusal told by its cause (vue/_shared36)
 import SessionNotice from './SessionNotice.vue' // the notice by cause (vue/_shared36)
 import { mapActions } from 'vuex'
@@ -93,7 +94,7 @@ import TabEffects from './TabEffects.vue'
 import TabAdvanced from './TabAdvanced.vue'
 import { copy } from './lights-shared.js'
 import { roleMixin } from './role-mixin.js' // what the role sees (vue/_shared)
-import { visibleItems } from './role-view.js'
+import { lockedItems, lockedNeed } from './role-view.js'
 import { pluginOf, pluginActive } from './workshop-ids.js' // Id nuevo o viejo del plugin
 import { serviceTexts, serviceDefaultName } from './service-text.js'
 
@@ -196,7 +197,7 @@ export default {
 	// what the previous person read (the configuration, the refusal they saw) must not stay when the identity changes; onSessionChange reads it again
 	sessionData: ['saved', 'form', 'catalog', 'm950', 'm950All', 'msg', 'msgError', 'refused', 'readError', 'countN', 'stripSel', 'copyConfig'],
 	sessionErrors: ['msg', 'msgError', 'refused', 'readError'], // what a refusal or a failure said: cleared when the person signs in, out or changes role (role-mixin.js)
-	components: { SessionNotice, PageHeader, SideTabs, HiddenNote, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
+	components: { SessionNotice, PageHeader, SideTabs, LockedCover, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
 	provide() {
 		// the tabs read and change the page through this object
 		return { lights: this };
@@ -305,9 +306,14 @@ export default {
 			// F3-V (2026-10-21): the summary (state of the strip, work light and scenes) is for everybody; the settings tabs are a
 			// technician's; Advanced (strip order, Pi pins, board panel, M950) is the administrator's
 			const all = this.tabsDefinition();
-			const shown = visibleItems(all, op => this.canDo(op));
+			// the tabs above the role stay in the list, locked (they open a cover that says why)
+			const shown = lockedItems(all, op => this.canDo(op));
 			// without an LED strip there is no work light to control
 			return this.stripPresent ? shown : shown.filter(k => k.id !== 'lighting');
+		},
+		// the role that opens the tab now open, or '' when this role may
+		lockedTab() {
+			return lockedNeed(this.tabsDefinition(), this.tab, op => this.canDo(op));
 		},
 		stripPresent() {
 			return !!(this.form.strip && this.form.strip.present);

@@ -75,6 +75,8 @@
 					</v-btn>
 				</div>
 				<lock-reason op="light.set" need="operator" class="mt-2" />
+				<!-- statuslight.set needs a technician (light.set and lights.scene an operator): its own reason, only when the first one does not already show -->
+				<lock-reason v-if="lights.canDo('light.set')" op="statuslight.set" need="technician" class="mt-1" />
 				<div v-if="lights.info.auto_off_min != null" class="text-caption text-faint mt-2">{{ t.autoOffIn }} {{ lights.info.auto_off_min }} min</div>
 			</v-card-text>
 		</v-card>
