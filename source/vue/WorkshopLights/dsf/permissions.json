@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "plugin": "WorkshopLights",
+  "namespace": "lights",
+  "prefixes": [
+    "light",
+    "lights",
+    "statuslight"
+  ],
+  "ui": "ui:lights:open",
+  "operations": [
+    "light.set",
+    "lights.apply_m950",
+    "lights.get",
+    "lights.import",
+    "lights.pi_pins",
+    "lights.pi_test",
+    "lights.save",
+    "lights.scene",
+    "lights.test_state",
+    "lights.zone",
+    "statuslight.set",
+    "view.heartbeat"
+  ],
+  "shared": [
+    "view.heartbeat"
+  ],
+  "restricted": [
+    "lights.apply_m950"
+  ],
+  "targets": [
+    "lights:pin",
+    "lights:scene",
+    "lights:state",
+    "lights:strip",
+    "lights:zone"
+  ],
+  "profiles": {
+    "readonly": {
+      "title": "LightsReadOnly",
+      "capabilities": [
+        "lights.view"
+      ]
+    },
+    "operator": {
+      "title": "LightsOperator",
+      "capabilities": [
+        "lights.use",
+        "lights.view"
+      ]
+    },
+    "admin": {
+      "title": "LightsAdmin",
+      "capabilities": [
+        "lights.config",
+        "lights.use",
+        "lights.view"
+      ]
+    }
+  }
+}

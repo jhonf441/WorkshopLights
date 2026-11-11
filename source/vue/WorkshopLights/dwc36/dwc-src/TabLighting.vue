@@ -53,7 +53,7 @@
 					<div class="help-tip-row"><v-switch v-model="form.work_light.auto_off.enabled" dense class="mt-0" hide-details :label="t.autoOff" /><help-tip :title="t.autoOff">{{ t.autoOffHelp }}</help-tip></div>
 					<v-text-field v-model.number="form.work_light.auto_off.minutes" type="number" min="1" max="600" suffix="min" :label="t.autoOffMinutes" dense outlined hide-details style="max-width:170px" :disabled="!form.work_light.auto_off.enabled" />
 				</div>
-				<div class="help-tip-row"><v-switch v-model="form.work_light.auto_on_job" dense class="mt-3" hide-details :label="t.autoOn" /><help-tip :title="t.autoOn">{{ t.autoOnHelp }}</help-tip></div>
+				<div class="help-tip-row mt-3"><v-switch v-model="form.work_light.auto_on_job" dense hide-details :label="t.autoOn" /><help-tip :title="t.autoOn">{{ t.autoOnHelp }}</help-tip></div>
 				<div v-if="hasCamera" class="text-caption text-faint mt-2"><v-icon x-small class="mr-1">mdi-camera</v-icon>{{ t.cameraNote }}</div>
 			</v-card-text>
 		</v-card>

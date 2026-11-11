@@ -27,8 +27,10 @@
 		</page-header>
 
 
-		<!-- the page could not be read because of the session or the role: said here (the save bar is for technicians only) -->
-		<session-notice v-if="readRefused && !saved" :kind="readKind" needed="technician" :action="readAction" />
+		<!-- The page could not be read because of the session or the role: there is no banner for it (owner 2026-11-06). The chip of the bar
+		     says "Sign in", every locked section carries its lock and the role that opens it in the side bar, and the section that is open
+		     shows the cover with the same sentence: a fourth copy above the bar only repeated them. readRefused still keeps the health chip
+		     calm (no "cannot read" while the cause is the session). -->
 
 		<!-- ===== Tabs ===== -->
 		<div class="st-layout mb-3">
