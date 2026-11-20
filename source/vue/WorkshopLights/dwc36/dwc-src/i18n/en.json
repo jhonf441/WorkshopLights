@@ -1,4 +1,15 @@
 {
+	"subjects": {
+		"save_lights": "Saving the lights",
+		"pi_outputs": "Pi outputs",
+		"strip_zones": "Strip zones",
+		"import_lights": "Importing the lights setup",
+		"lighting_zones": "Lighting zones",
+		"states_test": "Testing the states",
+		"scenes": "Lights scenes",
+		"use_lights": "Using the lights",
+		"status_lights": "Automatic status lights"
+	},
 	"colorRgbw": {
 		"cool_white": "Cool white",
 		"neutral_white": "Neutral white",

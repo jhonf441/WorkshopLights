@@ -70,13 +70,17 @@
 					<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" dense hide-details class="mt-0" :loading="lights.busyLight" :disabled="!lights.canDo('light.set')" @change="lights.changeLight" />
 					<!-- the same switch as in the Lighting tab: both can be turned on and off from here -->
 					<v-switch :input-value="lights.statusAuto" :label="$t('plugins.WorkshopLights.tabLighting.automatic_status_lights')" dense hide-details class="mt-0" :loading="lights.busyState" :disabled="!lights.canDo('statuslight.set')" @change="lights.changeState" />
-					<v-btn v-for="s in scenes" :key="s.id" small outlined :disabled="!lights.canDo('lights.scene')" :color="lights.form.work_light.scene === s.id ? 'primary' : ''" @click="lights.applyScene(s)">
-						<span class="chip-dot" :style="{ backgroundColor: hex(s.color) }" />{{ s.name }}
-					</v-btn>
+					<div v-for="s in scenes" :key="s.id" class="d-flex flex-column">
+						<v-btn small outlined :disabled="!sceneAllowed(s)" :color="lights.form.work_light.scene === s.id ? 'primary' : ''" @click="lights.applyScene(s)">
+							<span class="chip-dot" :style="{ backgroundColor: hex(s.color) }" />{{ s.name }}
+						</v-btn>
+						<!-- a rule may deny ONE scene: its sentence goes under its button, only when the group itself is allowed -->
+						<lock-reason v-if="lights.canDo('lights.scene')" op="lights.scene" :target="sceneTarget(s)" class="mt-1" :subject="$t('plugins.WorkshopLights.subjects.scenes')" />
+					</div>
 				</div>
-				<lock-reason op="light.set" need="operator" class="mt-2" />
+				<lock-reason :ops="useOps" min="operator" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.use_lights')" />
 				<!-- statuslight.set needs a technician (light.set and lights.scene an operator): its own reason, only when the first one does not already show -->
-				<lock-reason v-if="lights.canDo('light.set')" op="statuslight.set" need="technician" class="mt-1" />
+				<lock-reason v-if="useAllowed" :ops="statusOps" min="technician" class="mt-1" :subject="$t('plugins.WorkshopLights.subjects.status_lights')" />
 				<div v-if="lights.info.auto_off_min != null" class="text-caption text-faint mt-2">{{ t.autoOffIn }} {{ lights.info.auto_off_min }} min</div>
 			</v-card-text>
 		</v-card>
@@ -132,6 +136,7 @@ import { effectClass, rgbwHex } from './lights-shared.js'
 import { pluginActive } from './workshop-ids.js' // the side bar is another plugin: nothing about it when it is absent
 import HelpGuide from './HelpGuide.vue' // vue/_shared36
 import LockReason from './LockReason.vue' // vue/_shared36
+import { USE_OPS, STATUS_OPS, groupAllowed, sceneTarget } from './access-groups.js'
 
 // Every user-visible text of this component is here.
 const T = {
@@ -188,9 +193,13 @@ export default {
 	components: { LockReason, HelpGuide, StateBadge, LedStrip: LedStrip },
 	inject: ['lights'],
 	data() {
-		return { t: T };
+		return { t: T, useOps: USE_OPS, statusOps: STATUS_OPS };
 	},
 	computed: {
+		// the group "use": every operation of it is allowed (the answer of the service, the table of the role until it answers)
+		useAllowed() {
+			return groupAllowed(USE_OPS, op => this.lights.canDo(op));
+		},
 		screenHelp() {
 			return pluginActive(this.$store, 'bar') ? this.t.screenHelp : this.$t('plugins.WorkshopLights.tabSummary.at_the_top_of_this_page_no_bar');
 		},
@@ -198,7 +207,7 @@ export default {
 			return this.lights.indicator || {};
 		},
 		modeName() {
-			return this.ind.mode || this.lights.modeCurrent;
+			return this.ind.mode || this.lights.modeCurrent || '...';
 		},
 		statusName() {
 			const s = this.ind.status || (this.lights.model.state && this.lights.model.state.status) || 'idle';
@@ -249,6 +258,12 @@ export default {
 		}
 	},
 	methods: {
+		sceneTarget,
+		// one scene: the answer of the service for ITS target when it is known, else the answer for the operation
+		sceneAllowed(scene) {
+			const a = this.lights.canAnswer('lights.scene', sceneTarget(scene));
+			return a ? a.allowed : this.lights.canDo('lights.scene');
+		},
 		effectClass,
 		hex: rgbwHex,
 		boardName(id) {

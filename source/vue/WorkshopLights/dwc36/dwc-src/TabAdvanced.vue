@@ -94,9 +94,10 @@
 				<div class="text-caption text-faint mb-3">{{ t.profileWhat }}</div>
 				<div class="d-flex flex-wrap align-center" style="gap:12px">
 					<v-btn small outlined @click="lights.exportProfile()"><v-icon small left>mdi-download</v-icon>{{ t.export }}</v-btn>
-					<v-btn small outlined @click="lights.importProfile(withHardware)"><v-icon small left>mdi-upload</v-icon>{{ t.import }}</v-btn>
+					<v-btn small outlined :disabled="!importAllowed" @click="lights.importProfile(withHardware)"><v-icon small left>mdi-upload</v-icon>{{ t.import }}</v-btn>
 					<div class="help-tip-row"><v-checkbox v-model="withHardware" dense class="mt-0 pt-0" hide-details :label="t.withHardware" /><help-tip :title="t.withHardware">{{ t.withHardwareHelp }}</help-tip></div>
 				</div>
+				<lock-reason :ops="importOps" min="technician" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.import_lights')" />
 			</v-card-text>
 		</v-card>
 	</div>
@@ -110,6 +111,8 @@ import i18n from '../../i18n'
 import StripZones from './StripZones.vue'
 import PiOutputs from './PiOutputs.vue'
 import HelpTip from './HelpTip.vue' // vue/_shared36
+import LockReason from './LockReason.vue' // vue/_shared36
+import { IMPORT_OPS, groupAllowed } from './access-groups.js'
 import { api } from './workshop-api.js'
 import HelpGuide from './HelpGuide.vue' // vue/_shared36
 
@@ -143,12 +146,16 @@ const T = {
 };
 
 export default {
-	components: { HelpGuide, StripZones, PiOutputs, HelpTip },
+	components: { HelpGuide, StripZones, PiOutputs, HelpTip, LockReason },
 	inject: ['lights'],
 	data() {
-		return { t: T, sel: null, withHardware: false, onlyActive: false, view: this.readView() };
+		return { t: T, sel: null, withHardware: false, onlyActive: false, view: this.readView(), importOps: IMPORT_OPS };
 	},
 	computed: {
+		// import a profile: the answer of the service (the table of the role until it answers)
+		importAllowed() {
+			return groupAllowed(IMPORT_OPS, op => this.lights.canDo(op));
+		},
 		form() {
 			return this.lights.form;
 		},

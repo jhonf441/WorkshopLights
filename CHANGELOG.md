@@ -1,5 +1,65 @@
 # WorkshopLights -- historial de versiones
 
+## 2.9.14 -- 2026-11-18
+
+- accessRev: the page asks whoami at once when the service says the access changed
+
+## 2.9.13 -- 2026-11-18
+
+- Access changes (users or roles switched off or on, a role changed) reach the page: it asks whoami again while in view
+
+## 2.9.12 -- 2026-11-18
+
+- Session sign-in buttons with their icon and a softer blink (shared notice); WorkshopLights rebuilt
+
+## 2.9.11 -- 2026-11-18
+
+- Session sign-in buttons with their icon and a softer blink (shared notice); WorkshopLights rebuilt
+
+## 2.9.10 -- 2026-11-17
+
+- Back to the previous look: the family design pieces of the last rounds are removed (steppers, docks, big readings, token fills)
+
+## 2.9.9 -- 2026-11-13
+
+- Phase 6: family design pieces (docks, step numbers, fills and dark palette as shared tokens)
+
+## 2.9.8 -- 2026-11-13
+
+- Phase 6: family design pieces (docks, step numbers, fills and dark palette as shared tokens)
+
+## 2.9.7 -- 2026-11-13
+
+- Access notices name what they lock (JS and Vue), locked covers say which section they cover
+
+## 2.9.6 -- 2026-11-13
+
+- Access notices name what they lock (JS and Vue), locked covers say which section they cover
+
+## 2.9.5 -- 2026-11-13
+
+- Safe state and accent colors moved to family tokens; off-scale sizes and monospace fonts aligned
+
+## 2.9.4 -- 2026-11-13
+
+- Machine mode rule: the mode shown comes from the machine state first (currentMode), not only the selected mode
+
+## 2.9.3 -- 2026-11-12
+
+- Session reconcile, access notices name what they lock, kiosk native number keyboard
+
+## 2.9.2 -- 2026-11-12
+
+- Kiosk PIN: read-only field and number pad only, no full keyboard
+
+## 2.9.1 -- 2026-11-11
+
+- Owner report 2026-11-11: shutdown without session, kiosk PIN pad, hive confirm color, wheel release and Z keys, version in every page bar
+
+## 2.9.0 -- 2026-11-11
+
+- Block with reason: the use, status light, zones, save, test state, import, Pi pins and M950 controls say why they are blocked (auth.can, one call per screen); stop buttons are never asked or blocked
+
 ## 2.8.29 -- 2026-11-10
 
 - Recipes relative to the G-code (Printing), session role switch and UI fixes (26), SD layout manifest

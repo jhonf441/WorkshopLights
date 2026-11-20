@@ -1,4 +1,15 @@
 {
+	"subjects": {
+		"save_lights": "Guardar las luces",
+		"pi_outputs": "Salidas de la Pi",
+		"strip_zones": "Zonas de la tira",
+		"import_lights": "Importar la configuración de luces",
+		"lighting_zones": "Zonas de iluminación",
+		"states_test": "Probar los estados",
+		"scenes": "Escenas de luces",
+		"use_lights": "Usar las luces",
+		"status_lights": "Luces de estado automaticas"
+	},
 	"colorRgbw": {
 		"cool_white": "Blanco frío",
 		"neutral_white": "Blanco neutro",

@@ -35,7 +35,7 @@
 					<v-text-field v-model.number="r.x.output.brightness" type="number" min="1" max="100" :label="$t('plugins.WorkshopLights.tabAdvanced.pi_brightness')" dense outlined hide-details style="max-width:150px" />
 				</div>
 				<div class="d-flex flex-wrap align-center mt-3" style="gap:12px">
-					<v-btn small outlined :loading="testing === r.key" :disabled="!saved(r)" @click="test(r)"><v-icon small left>mdi-play</v-icon>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_test') }}</v-btn>
+					<v-btn small outlined :loading="testing === r.key" :disabled="!saved(r) || !testAllowed" @click="test(r)"><v-icon small left>mdi-play</v-icon>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_test') }}</v-btn>
 					<span v-if="!saved(r)" class="text-caption text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_save_first') }}</span>
 					<span v-if="statePi(r.x) && statePi(r.x).error" class="text-caption warning--text">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_error', { e: statePi(r.x).error }) }}</span>
 					<span v-else-if="statePi(r.x) && statePi(r.x).writes" class="text-caption text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_writes', { n: statePi(r.x).writes, ms: statePi(r.x).ms }) }}</span>
@@ -43,6 +43,7 @@
 				<div class="text-caption warning--text mt-2">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_wiring') }}</div>
 			</template>
 		</div>
+		<lock-reason :ops="piOps" min="technician" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.pi_outputs')" />
 	</div>
 </template>
 
@@ -52,7 +53,8 @@ import i18n from '../../i18n'
 'use strict'
 
 import { refusalCauseNow } from './session-refusal.js'; // a refusal told by its cause (vue/_shared36)
-import { roleMixin } from './role-mixin.js'; // vue/_shared36
+import { accessCanMixin } from './reason-mixin.js'; // what the role and the service say (vue/_shared36)
+import { PI_OPS, groupAllowed } from './access-groups.js';
 import LockReason from './LockReason.vue'; // vue/_shared36
 import { ts } from './shared-t.js';
 import { pinState, stripRows, pinsOfOthers, pinsSummary, pinToSelect, canEnable } from './pi-pins.js';
@@ -61,15 +63,19 @@ import { pinState, stripRows, pinsOfOthers, pinsSummary, pinToSelect, canEnable 
 // strip.output = { tipo: 'duet' | 'pi', pin, orden, brillo }; the page saves it.
 export default {
 	components: { LockReason },
-	mixins: [roleMixin],
+	mixins: [accessCanMixin],
 	// the pins of the Pi are read with the session: another person reads them again
 	sessionData: ['piPins', 'piStrips', 'piRead', 'readError'],
 	sessionErrors: ['readError'], // what a refusal or a failure said: cleared when the person signs in, out or changes role (role-mixin.js)
 	inject: ['lights'],
 	data() {
-		return { piPins: [], piStrips: [], piRead: false, readError: null, testing: null };
+		return { piPins: [], piStrips: [], piRead: false, readError: null, testing: null, piOps: PI_OPS };
 	},
 	computed: {
+		// the test of a pin: the answer of the service (the table of the role until it answers)
+		testAllowed() {
+			return groupAllowed(PI_OPS, op => this.canDo(op));
+		},
 		// 'session' | 'role' when the read was refused, else '': computed from the error, so it follows who is signed in
 		readKind() {
 			void this.identityTick;

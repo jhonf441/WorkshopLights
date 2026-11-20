@@ -36,7 +36,7 @@
 		<div class="st-layout mb-3">
 		<side-tabs v-model="tab" :items="tabs" />
 		<div class="st-body">
-		<locked-cover v-if="lockedTab" :needed="lockedTab" />
+		<locked-cover v-if="lockedTab" :needed="lockedTab" :items="tabs" :value="tab" />
 		<tab-summary v-else-if="tab === 'summary'" />
 		<tab-outputs v-else-if="tab === 'outputs'" />
 		<tab-lighting v-else-if="tab === 'lighting' && stripPresent" />
@@ -58,9 +58,10 @@
 			<span v-else-if="changed" class="text-body-2 warning--text mr-3">{{ t.unsaved }}</span>
 			<v-btn small :disabled="!changed" text class="mr-2" @click="discard()">{{ t.discard }}</v-btn>
 			<span v-if="changed && !numbersOk" class="text-body-2 error--text mr-3">{{ t.checkNumbers }}</span>
-			<v-btn small color="primary" :disabled="!saved || !changed || !numbersOk" :loading="saving" @click="save()">
+			<v-btn small color="primary" :disabled="!saved || !changed || !numbersOk || !canSave" :loading="saving" @click="save()">
 				<v-icon left>mdi-content-save</v-icon>{{ t.save }}
 			</v-btn>
+			<lock-reason :ops="saveOps" min="technician" class="ml-3" :subject="$t('plugins.WorkshopLights.subjects.save_lights')" />
 		</div>
 	</v-container>
 </template>
@@ -95,10 +96,14 @@ import TabColors from './TabColors.vue'
 import TabEffects from './TabEffects.vue'
 import TabAdvanced from './TabAdvanced.vue'
 import { copy } from './lights-shared.js'
-import { roleMixin } from './role-mixin.js' // what the role sees (vue/_shared)
+import { accessCanMixin } from './reason-mixin.js' // what the role and the service say (vue/_shared36)
+import { workshopCan } from './workshop-auth.js'
+import LockReason from './LockReason.vue' // vue/_shared36
+import { SAVE_OPS, SCREEN_OPS, groupAllowed } from './access-groups.js'
 import { lockedItems, lockedNeed } from './role-view.js'
 import { pluginOf, pluginActive } from './workshop-ids.js' // Id nuevo o viejo del plugin
 import { serviceTexts, serviceDefaultName } from './service-text.js'
+import { currentMode } from './current-mode.js' // the one rule of the real mode (vue/_shared36)
 
 // Factory names of scenes, extra zones and strips (WorkshopService lights_config.DEFAULT_NAME_KEYS): a name that is still
 // one of them, in either language, is shown (and saved again) in the language of this DWC; a renamed one stays as it is.
@@ -195,11 +200,11 @@ const FORM_EMPTY = {
 };
 
 export default {
-	mixins: [roleMixin],
+	mixins: [accessCanMixin],
 	// what the previous person read (the configuration, the refusal they saw) must not stay when the identity changes; onSessionChange reads it again
 	sessionData: ['saved', 'form', 'catalog', 'm950', 'm950All', 'msg', 'msgError', 'refused', 'readError', 'countN', 'stripSel', 'copyConfig'],
 	sessionErrors: ['msg', 'msgError', 'refused', 'readError'], // what a refusal or a failure said: cleared when the person signs in, out or changes role (role-mixin.js)
-	components: { SessionNotice, PageHeader, SideTabs, LockedCover, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
+	components: { LockReason, SessionNotice, PageHeader, SideTabs, LockedCover, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
 	provide() {
 		// the tabs read and change the page through this object
 		return { lights: this };
@@ -207,6 +212,7 @@ export default {
 	data() {
 		return {
 			t: T,
+			saveOps: SAVE_OPS,
 			tab: this.tabSaved(),
 			saved: null,
 			form: copy(FORM_EMPTY),
@@ -234,6 +240,10 @@ export default {
 		};
 	},
 	computed: {
+		// the save bar: the answer of the service for the operation (the table of the role until it answers)
+		canSave() {
+			return groupAllowed(SAVE_OPS, op => this.canDo(op));
+		},
 		// what a refusal said is computed from the error it came with: it follows the role and the language (never a stored sentence)
 		readKind() {
 			void this.identityTick;
@@ -309,13 +319,13 @@ export default {
 			// technician's; Advanced (strip order, Pi pins, board panel, M950) is the administrator's
 			const all = this.tabsDefinition();
 			// the tabs above the role stay in the list, locked (they open a cover that says why)
-			const shown = lockedItems(all, op => this.canDo(op));
+			const shown = lockedItems(all, op => this.roleCan(op));
 			// without an LED strip there is no work light to control
 			return this.stripPresent ? shown : shown.filter(k => k.id !== 'lighting');
 		},
 		// the role that opens the tab now open, or '' when this role may
 		lockedTab() {
-			return lockedNeed(this.tabsDefinition(), this.tab, op => this.canDo(op));
+			return lockedNeed(this.tabsDefinition(), this.tab, op => this.roleCan(op));
 		},
 		stripPresent() {
 			return !!(this.form.strip && this.form.strip.present);
@@ -363,7 +373,7 @@ export default {
 			return Array.isArray(secs) ? secs.filter(s => s[2] > 0) : [];
 		},
 		modeCurrent() {
-			return (this.model.state && this.model.state.machineMode) || 'Laser';
+			return currentMode(this.model); // '' while the mode is not known: never assume Laser (the consumers handle it)
 		},
 		machineStill() {
 			const s = this.model.state && this.model.state.status;
@@ -407,6 +417,10 @@ export default {
 			}
 		}
 	},
+	created() {
+		// ONE call to auth.can for every group of the page (the tabs ask the same cache)
+		this.wantCan(SCREEN_OPS);
+	},
 	mounted() {
 		this.load();
 	},
@@ -414,6 +428,11 @@ export default {
 		clearTimeout(this.armedTimer);
 	},
 	methods: {
+		// what the TABLE of the role says (the tabs are locked by role; the groups of buttons follow the service)
+		roleCan(op) {
+			void this.identityTick;
+			return workshopCan(op);
+		},
 		...mapActions('machine', ['sendCode']),
 		tabsDefinition() {
 			return [

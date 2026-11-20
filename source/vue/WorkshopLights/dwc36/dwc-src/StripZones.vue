@@ -54,6 +54,7 @@
 						{{ lights.armed === 'm950' ? t.tapAgainConfig : t.changeConfig + totalTab }}
 					</v-btn>
 					<span class="text-caption ml-2">{{ t.configCopy }}</span>
+					<lock-reason :ops="m950Ops" min="admin" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.strip_zones')" />
 				</div>
 			</v-alert>
 			<v-alert v-if="lights.requestRestart" dense outlined type="info" class="mt-3 mb-0">
@@ -159,6 +160,8 @@ import i18n from '../../i18n'
 import ColorRgbw from './ColorRgbw.vue'
 import zonesMixin from './zones-mixin.js'
 import HelpTip from './HelpTip.vue' // vue/_shared36
+import LockReason from './LockReason.vue' // vue/_shared36
+import { M950_OPS } from './access-groups.js'
 import WfField from './WfField.vue' // vue/_shared36
 
 // Every user-visible text of this component (and the ones the zones mixin uses) is here.
@@ -235,14 +238,14 @@ const T = {
 };
 
 export default {
-	components: { WfField, HelpTip, ColorRgbw },
+	components: { WfField, HelpTip, ColorRgbw, LockReason },
 	mixins: [zonesMixin],
 	props: {
 		// 'basica': size, output and checks of the strip; 'order': zones, order, status zone, extra strips
 		part: { type: String, default: 'basic' }
 	},
 	data() {
-		return { t: T };
+		return { t: T, m950Ops: M950_OPS };
 	},
 	computed: {
 		// the output of the strip that is open (main or additional): the Duet, or a pin of the Pi

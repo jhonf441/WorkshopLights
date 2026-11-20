@@ -8,11 +8,12 @@
 				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</div>
 				<div class="text-caption text-faint mb-3">{{ t.lightWhat }}</div>
 				<div class="d-flex flex-wrap" style="gap:24px">
-					<div class="help-tip-row"><v-switch :input-value="lights.lightOn" dense class="mt-0" :loading="lights.busyLight" @change="lights.changeLight" hide-details :label="t.lightSwitch" /><help-tip :title="t.lightSwitch">{{ t.lightSwitchHelp }}</help-tip></div>
+					<div class="help-tip-row"><v-switch :input-value="lights.lightOn" dense class="mt-0" :loading="lights.busyLight" :disabled="!zonesAllowed" @change="lights.changeLight" hide-details :label="t.lightSwitch" /><help-tip :title="t.lightSwitch">{{ t.lightSwitchHelp }}</help-tip></div>
 					<template v-if="lights.saved">
-						<div v-for="q in zoneSwitches" :key="q.key" class="help-tip-row"><v-switch :input-value="q.z.on" dense class="mt-0" :loading="lights.busyZone === q.key" @change="changeZone(q, $event)" hide-details :label="q.label" /><help-tip :title="q.label">{{ t.zoneSwitchHelp }}</help-tip></div>
+						<div v-for="q in zoneSwitches" :key="q.key" class="help-tip-row"><v-switch :input-value="q.z.on" dense class="mt-0" :loading="lights.busyZone === q.key" :disabled="!zonesAllowed" @change="changeZone(q, $event)" hide-details :label="q.label" /><help-tip :title="q.label">{{ t.zoneSwitchHelp }}</help-tip></div>
 					</template>
 				</div>
+				<lock-reason :ops="zoneOps" min="technician" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.lighting_zones')" />
 				<div class="group-title mt-4">{{ t.colorTitle }}</div>
 				<div class="text-caption text-faint mb-1">{{ t.colorHelp }}</div>
 				<div class="color-row"><color-rgbw v-model="form.light_color" :name="t.lightTitle" with-brightness /></div>
@@ -122,6 +123,8 @@ import i18n from '../../i18n'
 import ColorRgbw from './ColorRgbw.vue'
 import { pluginActive } from './workshop-ids.js' // the camera is another plugin: nothing about it when it is absent
 import HelpTip from './HelpTip.vue' // vue/_shared36
+import LockReason from './LockReason.vue' // vue/_shared36
+import { ZONE_OPS, groupAllowed } from './access-groups.js'
 import WfField from './WfField.vue' // vue/_shared36
 
 // Every user-visible text of this component is here.
@@ -174,12 +177,16 @@ const T = {
 };
 
 export default {
-	components: { WfField, HelpTip, ColorRgbw },
+	components: { WfField, HelpTip, ColorRgbw, LockReason },
 	inject: ['lights'],
 	data() {
-		return { t: T, nightFromMenu: false, nightToMenu: false };
+		return { t: T, nightFromMenu: false, nightToMenu: false, zoneOps: ZONE_OPS };
 	},
 	computed: {
+		// the work light and the extra zones: the answer of the service (the table of the role until it answers)
+		zonesAllowed() {
+			return groupAllowed(ZONE_OPS, op => this.lights.canDo(op));
+		},
 		hasCamera() {
 			return pluginActive(this.$store, 'camera');
 		},

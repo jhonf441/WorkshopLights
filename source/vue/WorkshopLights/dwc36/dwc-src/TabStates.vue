@@ -1,7 +1,8 @@
 <template>
 	<div>
 		<help-guide class="mb-3"><p class="mb-0">{{ t.intro }}</p></help-guide>
-		<div class="help-tip-row"><v-switch :input-value="lights.statusAuto" dense class="mt-0 mb-3" :loading="lights.busyState" @change="lights.changeState" hide-details :label="t.autoStatus" /><help-tip :title="t.autoStatus">{{ t.autoStatusHelp }}</help-tip></div>
+		<div class="help-tip-row"><v-switch :input-value="lights.statusAuto" dense class="mt-0 mb-3" :loading="lights.busyState" :disabled="!testAllowed" @change="lights.changeState" hide-details :label="t.autoStatus" /><help-tip :title="t.autoStatus">{{ t.autoStatusHelp }}</help-tip></div>
+		<lock-reason :ops="testOps" min="technician" class="mb-3" :subject="$t('plugins.WorkshopLights.subjects.states_test')" />
 
 		<v-alert v-if="lookAlikes.length" dense outlined type="warning" class="mb-3">
 			{{ t.lookAlike }}
@@ -74,7 +75,7 @@
 								<div class="text-body-1 font-weight-medium">{{ info(e.id).name }}</div>
 								<div class="text-caption text-faint">{{ info(e.id).desc }}</div>
 							</div>
-							<v-btn x-small outlined :loading="lights.testingState === e.id" :title="t.testHelp" @click="lights.testState(e.id)"><v-icon x-small left>mdi-play</v-icon>{{ t.test }}</v-btn>
+							<v-btn x-small outlined :loading="lights.testingState === e.id" :disabled="!testAllowed" :title="t.testHelp" @click="lights.testState(e.id)"><v-icon x-small left>mdi-play</v-icon>{{ t.test }}</v-btn>
 							<v-switch v-model="form.states[e.id].active" :disabled="e.id === 'stop'" dense hide-details class="mt-0 pt-0 flex-grow-0" :title="t.activeHelp" />
 						</div>
 						<div class="state-body">
@@ -136,6 +137,8 @@ import LedStrip from './LedStrip.vue'
 import { copy, effectClass, rgbwHex } from './lights-shared.js'
 import { pluginActive, pathExists } from './workshop-ids.js' // states that belong to other plugins are not listed without them
 import HelpTip from './HelpTip.vue' // vue/_shared36
+import LockReason from './LockReason.vue' // vue/_shared36
+import { TEST_OPS, groupAllowed } from './access-groups.js'
 import WfField from './WfField.vue' // vue/_shared36
 import HelpGuide from './HelpGuide.vue' // vue/_shared36
 
@@ -222,10 +225,10 @@ const T = {
 };
 
 export default {
-	components: { HelpGuide, WfField, HelpTip, ColorRgbw, LedStrip: LedStrip },
+	components: { HelpGuide, WfField, HelpTip, ColorRgbw, LockReason, LedStrip: LedStrip },
 	inject: ['lights'],
 	data() {
-		return { t: T, applyingMode: null, turnIdx: 0, turnTimer: null };
+		return { t: T, applyingMode: null, turnIdx: 0, turnTimer: null, testOps: TEST_OPS };
 	},
 	watch: {
 		turnMs: { immediate: true, handler() { this.armTurns(); } }
@@ -234,6 +237,10 @@ export default {
 		clearInterval(this.turnTimer);
 	},
 	computed: {
+		// "test this state" and the automatic status switch: the answer of the service (the table of the role until it answers)
+		testAllowed() {
+			return groupAllowed(TEST_OPS, op => this.lights.canDo(op));
+		},
 		// "Taking turns" preview: the service publishes one frozen frame of it (a blink phase costs a command to the Duet), so the page
 		// rotates the active states by itself, as the zone does
 		turnItems() {
