@@ -1,18 +1,59 @@
 <template>
 	<div>
-		<!-- pins of this Pi: shown with their state and reason while none can drive a strip (never hidden) -->
-		<div v-if="summary !== 'some'" class="mb-3">
-			<div class="group-title">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_pins_title') }}</div>
+		<!-- the answer first (can the Pi drive a strip?), then how to enable it, then the pins folded away -->
+		<div v-if="summary !== 'some'" class="pi-answer mb-3" :class="'is-' + summary">
 			<lock-reason v-if="summary === 'unread' && readKind" :kind="readKind" need="technician" :action="$t('plugins.WorkshopLights.lights.action_read')" />
-			<div v-else-if="summary === 'unread'" class="text-caption text-faint">{{ readError ? $t('plugins.WorkshopLights.tabAdvanced.pi_read_error') : $t('plugins.WorkshopLights.tabAdvanced.pi_pins_loading') }}</div>
-			<ul v-else-if="piPins.length" class="text-body-2 pi-list">
-				<li v-for="p in piPins" :key="p.gpio"><b>GPIO{{ p.gpio }}</b> - {{ p.func }}: {{ pinText(p, []) }}</li>
-			</ul>
-			<v-alert v-if="summary !== 'unread'" dense outlined type="info" class="mt-2 mb-0">
-				<div>{{ summary === 'empty' ? $t('plugins.WorkshopLights.tabAdvanced.pi_empty_why') : $t('plugins.WorkshopLights.tabAdvanced.pi_none_why') }}</div>
-				<div class="mt-2">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_enable_how') }}</div>
-			</v-alert>
+			<div v-else-if="summary === 'unread'" class="text-body-2 text-faint">{{ readError ? $t('plugins.WorkshopLights.tabAdvanced.pi_read_error') : $t('plugins.WorkshopLights.tabAdvanced.pi_pins_loading') }}</div>
+			<template v-else>
+				<div class="pi-answer-head">
+					<v-icon small class="mr-2">mdi-close-circle-outline</v-icon>
+					<span class="pi-answer-title">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_answer_no') }}</span>
+				</div>
+					<help-line class="mb-2" :text="$t('plugins.WorkshopLights.tabAdvanced.pi_why_spi')" />
+				<div class="text-body-2">{{ summary === 'empty' ? $t('plugins.WorkshopLights.tabAdvanced.pi_empty_why') : $t('plugins.WorkshopLights.tabAdvanced.pi_reason_none') }}</div>
+				<div class="text-body-2 mt-1">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_needs') }}</div>
+			</template>
+			<div v-if="summary !== 'unread' || readError" class="mt-3">
+				<v-btn small outlined :loading="checking" @click="recheck"><v-icon small left>mdi-refresh</v-icon>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_check_again') }}</v-btn>
+			</div>
 		</div>
+
+		<div v-if="summary === 'none'" class="pi-steps mb-3">
+			<div class="pi-steps-title">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_steps_title') }}</div>
+			<ol class="text-body-2 pi-steps-list">
+				<li>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_step_open') }}</li>
+				<li>
+					{{ $t('plugins.WorkshopLights.tabAdvanced.pi_step_paste') }}
+					<div class="pi-command">
+						<code class="pi-command-text">{{ enableCommand }}</code>
+						<v-btn small outlined class="pi-command-copy" @click="copyCommand"><v-icon small left>{{ copied ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>{{ copied ? $t('plugins.WorkshopLights.tabAdvanced.pi_copied') : $t('plugins.WorkshopLights.tabAdvanced.pi_copy') }}</v-btn>
+					</div>
+					<div class="text-caption text-faint mt-1">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_command_does_' + enableBus) }}</div>
+				</li>
+				<li>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_step_back') }}</li>
+			</ol>
+			<div class="text-caption text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_system_change') }}</div>
+		</div>
+
+		<div v-if="summary === 'some'" class="pi-answer is-some mb-3">
+			<div class="pi-answer-head">
+				<v-icon small class="mr-2">mdi-check-circle-outline</v-icon>
+				<span class="pi-answer-title">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_answer_yes') }}</span>
+			</div>
+				<help-line class="mb-2" :text="$t('plugins.WorkshopLights.tabAdvanced.pi_why_spi')" />
+			<div class="text-body-2">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_reason_some', { pins: validPins }) }}</div>
+		</div>
+
+		<details v-if="piPins.length" class="pi-pins mb-3" data-wf-disclosure>
+			<summary>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_see_pins', { n: piPins.length }) }}</summary>
+			<div v-for="g in pinGroups" :key="g.id" class="pi-group">
+				<div class="pi-group-title">{{ g.title }} ({{ g.pins.length }})</div>
+				<div class="text-caption text-faint">{{ g.note }}</div>
+				<div class="pi-group-pins">
+					<span v-for="p in g.pins" :key="p.gpio" class="pi-pin" :title="'GPIO' + p.gpio + ' - ' + (p.func || '') + (p.reason ? ' - ' + p.reason : '')">GPIO{{ p.gpio }}<span v-if="g.id === 'busy' && p.reason" class="pi-pin-why"> {{ p.reason }}</span></span>
+				</div>
+			</div>
+		</details>
 
 		<div v-for="r in rows" :key="r.key" class="pi-row">
 			<div class="text-subtitle-2 mb-1">{{ name(r) }}</div>
@@ -56,20 +97,21 @@ import { refusalCauseNow } from './session-refusal.js'; // a refusal told by its
 import { accessCanMixin } from './reason-mixin.js'; // what the role and the service say (vue/_shared36)
 import { PI_OPS, groupAllowed } from './access-groups.js';
 import LockReason from './LockReason.vue'; // vue/_shared36
+import HelpLine from './HelpLine.vue' // vue/_shared36
 import { ts } from './shared-t.js';
-import { pinState, stripRows, pinsOfOthers, pinsSummary, pinToSelect, canEnable } from './pi-pins.js';
+import { pinState, stripRows, pinsOfOthers, pinsSummary, pinToSelect, canEnable, pinGroupsOf, enableCommandOf } from './pi-pins.js';
 
 // The output of each strip (main and extra): the Duet board or a pin of the Pi. Same data model and same save as always:
 // strip.output = { tipo: 'duet' | 'pi', pin, orden, brillo }; the page saves it.
 export default {
-	components: { LockReason },
+	components: { HelpLine, LockReason },
 	mixins: [accessCanMixin],
 	// the pins of the Pi are read with the session: another person reads them again
 	sessionData: ['piPins', 'piStrips', 'piRead', 'readError'],
 	sessionErrors: ['readError'], // what a refusal or a failure said: cleared when the person signs in, out or changes role (role-mixin.js)
 	inject: ['lights'],
 	data() {
-		return { piPins: [], piStrips: [], piRead: false, readError: null, testing: null, piOps: PI_OPS };
+		return { piPins: [], piStrips: [], piRead: false, readError: null, testing: null, piOps: PI_OPS, checking: false, copied: false };
 	},
 	computed: {
 		// the test of a pin: the answer of the service (the table of the role until it answers)
@@ -89,6 +131,23 @@ export default {
 		},
 		summary() {
 			return pinsSummary(this.piPins, this.piRead);
+		},
+		// the bus DSF uses for the Duet is never offered (its pins are not listed): if GPIO20 is missing and GPIO10 is there, DSF is on bus 1
+		enableBus() {
+			const has = g => this.piPins.some(p => p.gpio === g);
+			return has(10) && !has(20) ? 'spi0' : 'spi1';
+		},
+		enableCommand() {
+			return enableCommandOf(this.enableBus);
+		},
+		// pins grouped by reason instead of one line each: used by the system, free but without SPI, valid for a strip
+		pinGroups() {
+			const k = 'plugins.WorkshopLights.tabAdvanced.';
+			const groups = pinGroupsOf(this.piPins);
+			return groups.map(g => ({ id: g.id, pins: g.pins, title: i18n.t(k + 'pi_group_' + g.id), note: i18n.t(k + 'pi_group_' + g.id + '_note') }));
+		},
+		validPins() {
+			return this.piPins.filter(p => p.strip_spi).map(p => 'GPIO' + p.gpio).join(', ');
 		}
 	},
 	mounted() {
@@ -110,6 +169,25 @@ export default {
 				this.piPins = [];
 				// a refusal says its cause (session / role) instead of "reading..." forever or "could not read"
 				this.readError = e; // the error itself: whether it is a refusal and what it says is computed (readKind), so it follows the role and the language
+			}
+		},
+		// "Check again" after restarting the Pi: reads the pin analysis once more
+		async recheck() {
+			this.checking = true;
+			try {
+				await this.piLoad();
+			} finally {
+				this.checking = false;
+			}
+		},
+		copyCommand() {
+			try {
+				navigator.clipboard.writeText(this.enableCommand).then(() => {
+					this.copied = true;
+					setTimeout(() => { this.copied = false; }, 2000);
+				});
+			} catch (e) {
+				/* the command is shown in the box: it can be selected by hand */
 			}
 		},
 		name(r) {
@@ -200,8 +278,95 @@ export default {
 	color: var(--tp-faint, #9e9e9e);
 	margin-bottom: 6px;
 }
-.pi-list {
-	padding-left: 18px;
+.pi-answer {
+	padding: 12px 14px;
+	border-radius: 8px;
+	border: 1px solid rgba(128, 128, 128, 0.45);
+	background: rgba(128, 128, 128, 0.08);
+}
+.pi-answer.is-none,
+.pi-answer.is-empty {
+	border-color: rgba(255, 160, 0, 0.7);
+	background: rgba(255, 160, 0, 0.1);
+}
+.pi-answer.is-some {
+	border-color: rgba(76, 175, 80, 0.7);
+	background: rgba(76, 175, 80, 0.1);
+}
+.pi-answer-head {
+	display: flex;
+	align-items: center;
+	margin-bottom: 4px;
+}
+.pi-answer-title {
+	font-size: 15px;
+	font-weight: 600;
+}
+.pi-steps-title,
+.pi-group-title {
+	font-size: 13px;
+	font-weight: 600;
+}
+.pi-steps-list {
+	padding-left: 20px;
+	margin: 4px 0;
+}
+.pi-steps-list li {
+	margin-bottom: 8px;
+}
+.pi-command {
+	display: flex;
+	align-items: stretch;
+	gap: 8px;
+	margin-top: 6px;
+}
+.pi-command-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 8px 10px;
+	border-radius: 6px;
+	font-size: 12px;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	background: rgba(128, 128, 128, 0.16);
+	border: 1px solid rgba(128, 128, 128, 0.35);
+	color: inherit;
+}
+.pi-command-copy {
+	flex: none;
+	align-self: flex-start;
+	min-height: var(--wf-size-s, 32px); /* a secondary button of the family scale */
+}
+@media (max-width: 479px) {
+	.pi-command {
+		flex-direction: column;
+	}
+}
+.pi-pins > summary {
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 600;
+	min-height: 32px;
+}
+.pi-group {
+	margin-top: 10px;
+}
+.pi-group-pins {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 4px;
+}
+.pi-pin {
+	font-size: 12px;
+	padding: 2px 8px;
+	border-radius: 4px;
+	border: 1px solid rgba(128, 128, 128, 0.45);
+	background: rgba(128, 128, 128, 0.12);
+}
+.pi-pin-why {
+	opacity: 0.85;
 }
 .pi-row {
 	padding: 10px 0;

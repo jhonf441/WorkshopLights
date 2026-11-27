@@ -2,52 +2,46 @@
 	<div>
 		<div class="text-body-2 text-faint mb-3">{{ t.intro }}</div>
 
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="d-flex align-center mb-1">
-					<div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-palette-swatch</v-icon>{{ t.presetsTitle }}</div>
-					<v-spacer />
-					<v-btn x-small text @click="factory()">{{ t.factory }}</v-btn>
-				</div>
-				<div class="text-caption text-faint mb-2">{{ t.presetsHelp }}</div>
-				<div class="d-flex flex-wrap mb-2" style="gap:8px">
-					<button v-for="p in presets" :key="p.id" type="button" class="theme" :title="p.help || ''" @click="applyPreset(p)">
-						<span class="theme-samples">
-							<span v-for="(c, k) in [p.mode_colors.Laser, p.mode_colors.CNC, p.mode_colors.FFF, p.states.paused]" :key="k" :style="{ backgroundColor: css(c) }" />
-						</span>
-						<span class="text-body-2">{{ p.name }}</span>
-					</button>
-				</div>
-				<div class="d-flex align-center flex-wrap" style="gap:8px">
-					<v-btn small outlined @click="distinctPatterns()"><v-icon small left>mdi-waveform</v-icon>{{ t.patterns }}</v-btn>
-					<span class="text-caption text-faint">{{ t.patternsHelp }}</span>
-				</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<div class="d-flex align-center mb-1">
+				<h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-palette-swatch</v-icon>{{ t.presetsTitle }}</h4>
+				<v-spacer />
+				<v-btn x-small text @click="factory()">{{ t.factory }}</v-btn>
+			</div>
+			<div class="text-caption text-faint mb-2">{{ t.presetsHelp }}</div>
+			<div class="d-flex flex-wrap mb-2" style="gap:8px">
+				<button v-for="p in presets" :key="p.id" type="button" class="theme" data-wf-hit="y" :title="p.help || ''" @click="applyPreset(p)">
+					<span class="theme-samples">
+						<span v-for="(c, k) in [p.mode_colors.Laser, p.mode_colors.CNC, p.mode_colors.FFF, p.states.paused]" :key="k" :style="{ backgroundColor: css(c) }" />
+					</span>
+					<span class="text-body-2">{{ p.name }}</span>
+				</button>
+			</div>
+			<div class="d-flex align-center flex-wrap" style="gap:8px">
+				<v-btn small outlined @click="distinctPatterns()"><v-icon small left>mdi-waveform</v-icon>{{ t.patterns }}</v-btn>
+				<span class="text-caption text-faint">{{ t.patternsHelp }}</span>
+			</div>
+		</div>
 
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-shape-outline</v-icon>{{ t.modesTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.modesHelp }}</div>
-				<div class="color-grid">
-					<color-rgbw v-model="form.mode_colors.Laser" :name="t.laser" />
-					<color-rgbw v-model="form.mode_colors.CNC" :name="t.cnc" />
-					<color-rgbw v-model="form.mode_colors.FFF" :name="t.fff" />
-				</div>
-				<div class="d-flex align-center mt-3" style="max-width:460px">
-					<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.idleBrightness }}</span>
-					<v-slider v-model="form.idle_brightness" min="0" max="255" hide-details thumb-label dense />
-				</div>
-				<div class="text-caption text-faint">{{ t.idleBrightnessHelp }}</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-shape-outline</v-icon>{{ t.modesTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.modesHelp }}</div>
+			<div class="color-grid">
+				<color-rgbw v-model="form.mode_colors.Laser" :name="t.laser" />
+				<color-rgbw v-model="form.mode_colors.CNC" :name="t.cnc" />
+				<color-rgbw v-model="form.mode_colors.FFF" :name="t.fff" />
+			</div>
+			<div class="d-flex align-center mt-3" style="max-width:460px">
+				<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.idleBrightness }}</span>
+				<v-slider v-model="form.idle_brightness" min="0" max="255" hide-details thumb-label dense />
+			</div>
+			<div class="text-caption text-faint">{{ t.idleBrightnessHelp }}</div>
+		</div>
 
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-traffic-light</v-icon>{{ t.statesTitle }}</div>
-				<div class="text-caption text-faint">{{ t.statesHelp }}</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-traffic-light</v-icon>{{ t.statesTitle }}</h4>
+			<div class="text-caption text-faint">{{ t.statesHelp }}</div>
+		</div>
 	</div>
 </template>
 

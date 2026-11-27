@@ -3,15 +3,15 @@
 		<!-- ===================== basic: size, output and checks ===================== -->
 		<template v-if="part === 'basic'">
 			<div class="d-flex align-center flex-wrap mb-2" style="gap:12px">
-				<wf-field id="lf-1" :label="t.lightingLeds" style="max-width:200px"><template #help><help-tip :title="t.lightingLeds">{{ t.lightingLedsHelp }}</help-tip></template><v-text-field id="lf-1" v-model.number="form.led_start" type="number" min="0" dense outlined hide-details :aria-label="t.lightingLeds" /></wf-field>
-				<wf-field id="lf-2" :label="t.statusLeds" style="max-width:200px"><template #help><help-tip :title="t.statusLeds">{{ t.statusLedsHelp }}</help-tip></template><v-text-field id="lf-2" v-model.number="form.led_count" type="number" min="1" dense outlined hide-details :aria-label="t.statusLeds" /></wf-field>
-				<wf-field id="lf-3" :label="t.outputNumber" style="max-width:220px"><template #help><help-tip :title="t.outputNumber">{{ outputHint }}</help-tip></template><v-text-field id="lf-3" v-model.number="form.led_strip" type="number" min="0" max="9" dense outlined hide-details :aria-label="t.outputNumber" /></wf-field>
+				<wf-field id="lf-1" :label="t.lightingLeds" style="max-width:200px"><v-text-field id="lf-1" v-model.number="form.led_start" type="number" min="0" dense outlined hide-details :aria-label="t.lightingLeds" /></wf-field>
+				<wf-field id="lf-2" :label="t.statusLeds" style="max-width:200px"><v-text-field id="lf-2" v-model.number="form.led_count" type="number" min="1" dense outlined hide-details :aria-label="t.statusLeds" /></wf-field>
+				<wf-field id="lf-3" :label="t.outputNumber" style="max-width:220px"><v-text-field id="lf-3" v-model.number="form.led_strip" type="number" min="0" max="9" dense outlined hide-details :aria-label="t.outputNumber" /></wf-field>
 			</div>
-
+			<!-- the help of these three fields is in the one fold of the Outputs section, at its foot (TabOutputs helpItems) -->
 			<div class="group-title mt-3"><v-icon small class="mr-1">mdi-raspberry-pi</v-icon>{{ $t('plugins.WorkshopLights.stripZones.out_title') }}</div>
 			<div class="text-body-2">
 				{{ output.kind === 'pi' ? $t('plugins.WorkshopLights.stripZones.out_now_pi', { pin: output.pin }) : $t('plugins.WorkshopLights.stripZones.out_now_duet') }}
-				<a href="#" class="ml-2" @click.prevent="lights.tab = 'advanced'">{{ $t('plugins.WorkshopLights.stripZones.out_change') }}</a>
+				<a href="#" class="ml-2" data-wf-hit="y" @click.prevent="lights.tab = 'advanced'">{{ $t('plugins.WorkshopLights.stripZones.out_change') }}</a>
 			</div>
 			<div class="text-caption text-faint mt-1">{{ output.kind === 'pi' ? $t('plugins.WorkshopLights.stripZones.out_pi_help') : $t('plugins.WorkshopLights.stripZones.out_duet_help') }}</div>
 
@@ -46,23 +46,20 @@
 
 			<v-alert v-if="lights.saved && !lights.m950.line" dense outlined type="warning" class="mt-3 mb-0">
 				{{ t.noM950 }} <code>M950 E{{ form.led_strip }} C"&lt;{{ t.output }}&gt;" T2 U{{ totalTab }}</code>
+				<div class="mt-2"><led-strip-add :strip="Number(form.led_strip)" :leds="totalTab" /></div>
 			</v-alert>
 			<v-alert v-if="totalFirmwareTab && totalTab !== totalFirmwareTab" dense outlined type="warning" class="mt-3 mb-0">
 				{{ t.mismatch1 }} ({{ totalTab }}) {{ t.mismatch2 }} {{ totalFirmwareTab }} {{ t.mismatch3 }} <code>{{ m950LineTab }}</code>.
 				<div class="mt-2">
-					<v-btn small :color="lights.armed === 'm950' ? 'error' : 'warning'" :dark="lights.armed === 'm950'" :loading="lights.applyingM950" :disabled="!lights.canDo('lights.apply_m950')" @click="lights.arm('m950', applyM950)">
-						{{ lights.armed === 'm950' ? t.tapAgainConfig : t.changeConfig + totalTab }}
-					</v-btn>
+					<wf-action-button :action="m950Act" danger :disabled="!lights.canDo('lights.apply_m950')" :label="t.changeConfig + totalTab" :arm-label="t.tapAgainConfig" @run="m950Act.run({})" />
+					<wf-result :action="m950Act" :text="m950Act.state === 'error' ? t.cantChangeG + (m950Act.error.message || '') : ''" @retry="m950Act.retry()" />
 					<span class="text-caption ml-2">{{ t.configCopy }}</span>
 					<lock-reason :ops="m950Ops" min="admin" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.strip_zones')" />
 				</div>
 			</v-alert>
 			<v-alert v-if="lights.requestRestart" dense outlined type="info" class="mt-3 mb-0">
 				{{ t.configSaid }} {{ totalFirmwareTab }} ({{ t.copy }}: {{ lights.copyConfig }}). {{ t.boardTakes }}
-				<v-btn small class="ml-2" :color="lights.armed === 'restart' ? 'error' : 'primary'" :dark="lights.armed === 'restart'"
-					:disabled="!lights.machineStill" @click="lights.arm('restart', restartBoard)">
-					{{ lights.armed === 'restart' ? t.tapAgainReboot : t.reboot }}
-				</v-btn>
+				<wf-action-button class="ml-2" :action="restartAct" danger :disabled="!lights.machineStill" :label="t.reboot" :arm-label="t.tapAgainReboot" @run="restartAct.run({})" />
 				<span v-if="!lights.machineStill" class="text-caption ml-2">{{ t.onlyIdle }}</span>
 			</v-alert>
 
@@ -113,12 +110,11 @@
 				<v-text-field v-model="stripX.name" :label="t.stripNameLabel" dense outlined hide-details maxlength="30" style="max-width:220px" />
 				<v-text-field v-model.number="stripX.led_strip" type="number" min="0" max="9" :label="t.stripNumber" dense outlined hide-details style="max-width:170px" />
 				<v-spacer />
-				<v-btn small text :color="lights.armed === 'removeStrip' ? 'error' : ''" @click="lights.arm('removeStrip', removeStrip)">
-					{{ lights.armed === 'removeStrip' ? t.tapAgainRemove : t.removeStrip }}
-				</v-btn>
+				<wf-action-button :action="removeAct" danger :label="t.removeStrip" :arm-label="t.tapAgainRemove" @run="removeAct.run({})" />
 			</div>
 			<v-alert v-if="lights.saved && stripX && !m950LineTab" dense outlined type="warning" class="mb-3">
 				{{ t.stripE }}{{ eTab }} {{ t.stripNotInConfig }} <code>M950 E{{ eTab }} C"&lt;{{ t.output }}&gt;" T2 U{{ totalTab }}</code>
+				<div class="mt-2"><led-strip-add :strip="Number(eTab)" :leds="totalTab" /></div>
 			</v-alert>
 
 			<div class="text-body-2 mb-1">{{ t.orderTitle }}</div>
@@ -159,10 +155,13 @@ import i18n from '../../i18n'
 
 import ColorRgbw from './ColorRgbw.vue'
 import zonesMixin from './zones-mixin.js'
-import HelpTip from './HelpTip.vue' // vue/_shared36
 import LockReason from './LockReason.vue' // vue/_shared36
 import { M950_OPS } from './access-groups.js'
+import LedStripAdd from './LedStripAdd.vue'
 import WfField from './WfField.vue' // vue/_shared36
+import WfActionButton from './WfActionButton.vue' // vue/_shared36 (FASE2)
+import WfResult from './WfResult.vue' // vue/_shared36 (FASE2)
+import { createAction } from './workshop-action.js' // vue/_shared36 (FASE2)
 
 // Every user-visible text of this component (and the ones the zones mixin uses) is here.
 const T = {
@@ -172,12 +171,8 @@ const T = {
 	stripName: i18n.t('plugins.WorkshopLights.stripZones.strip'),
 	stateZoneNone: i18n.t('plugins.WorkshopLights.stripZones.none_screens_only'),
 	lightingLeds: i18n.t('plugins.WorkshopLights.stripZones.lighting_leds'),
-	lightingLedsHelp: i18n.t('plugins.WorkshopLights.stripZones.the_ones_that_give_work_light'),
 	statusLeds: i18n.t('plugins.WorkshopLights.stripZones.status_leds'),
-	statusLedsHelp: i18n.t('plugins.WorkshopLights.stripZones.the_ones_that_show_the_mode'),
 	outputNumber: i18n.t('plugins.WorkshopLights.stripZones.board_output_e'),
-	outputHintWith: i18n.t('plugins.WorkshopLights.stripZones.config_g_line'),
-	outputHint: i18n.t('plugins.WorkshopLights.stripZones.number_in_m950_e_n_change'),
 	livePreview: i18n.t('plugins.WorkshopLights.stripZones.strip_view_live_copy'),
 	led: 'LED',
 	manyLeds: i18n.t('plugins.WorkshopLights.stripZones.leds_all_are_shown_shrunk_to'),
@@ -238,14 +233,21 @@ const T = {
 };
 
 export default {
-	components: { WfField, HelpTip, ColorRgbw, LockReason },
+	components: { WfActionButton, WfResult, WfField, ColorRgbw, LockReason, LedStripAdd },
 	mixins: [zonesMixin],
 	props: {
 		// 'basica': size, output and checks of the strip; 'order': zones, order, status zone, extra strips
 		part: { type: String, default: 'basic' }
 	},
 	data() {
-		return { t: T, m950Ops: M950_OPS };
+		// the three double-touch writes of the strip (workshop-action.js): 4000 ms to touch again, one request at a time
+		return {
+			t: T,
+			m950Ops: M950_OPS,
+			m950Act: createAction({ run: () => this.applyM950(), arm: 'double' }),
+			restartAct: createAction({ run: () => this.restartBoard(), arm: 'double' }),
+			removeAct: createAction({ run: () => this.removeStrip(), arm: 'double' })
+		};
 	},
 	computed: {
 		// the output of the strip that is open (main or additional): the Duet, or a pin of the Pi
@@ -255,9 +257,6 @@ export default {
 				this.$set(x, 'output', { kind: 'duet', pin: 20, order: 'GRBW', brightness: 60 });
 			}
 			return x.output;
-		},
-		outputHint() {
-			return this.lights.m950.line ? T.outputHintWith + this.lights.m950.line.split(';')[0].trim() : T.outputHint;
 		},
 		textZoneState() {
 			if (this.form.zone_state === 'none') {
@@ -269,6 +268,11 @@ export default {
 			return T.stateZoneMainText;
 		}
 	},
+	beforeDestroy() {
+		this.m950Act.dispose();
+		this.restartAct.dispose();
+		this.removeAct.dispose();
+	},
 	methods: {
 		async test(kind) {
 			const t = this.stripX ? { strip: Number(this.eTab) } : {};
@@ -279,24 +283,17 @@ export default {
 			}
 		},
 		async applyM950() {
-			this.lights.applyingM950 = true;
-			try {
-				const r = await this.lights.lightsApi('apply_m950', Object.assign({ total: Number(this.totalTab) }, this.stripX ? { strip: Number(this.eTab) } : {}));
-				if (!r.ok) {
-					throw new Error(r.error);
-				}
-				if (this.stripX) {
-					this.$set(this.lights.m950All, String(this.eTab), r.m950);
-				} else {
-					this.lights.m950 = r.m950;
-				}
-				this.lights.copyConfig = r.copy;
-				this.lights.requestRestart = true;
-			} catch (e) {
-				this.lights.message(T.cantChangeG + (e.message || e), true);
-			} finally {
-				this.lights.applyingM950 = false;
+			const r = await this.lights.lightsApi('apply_m950', Object.assign({ total: Number(this.totalTab) }, this.stripX ? { strip: Number(this.eTab) } : {}));
+			if (!r.ok) {
+				throw new Error(r.error);
 			}
+			if (this.stripX) {
+				this.$set(this.lights.m950All, String(this.eTab), r.m950);
+			} else {
+				this.lights.m950 = r.m950;
+			}
+			this.lights.copyConfig = r.copy;
+			this.lights.requestRestart = true;
 		},
 		async restartBoard() {
 			this.lights.requestRestart = false;

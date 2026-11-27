@@ -1,93 +1,90 @@
 <template>
 	<div>
-		<div class="text-body-2 text-faint mb-3">{{ t.intro }}</div>
-
 		<!-- ===== 1. LED strip ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-led-strip-variant</v-icon>{{ t.stripTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ t.stripWhat }}</div>
-				<div class="help-tip-row"><v-switch v-model="form.strip.present" dense class="mt-0 mb-3" hide-details :label="t.stripSwitch" /><help-tip :title="t.stripSwitch">{{ t.stripSwitchHelp }}</help-tip></div>
-				<strip-zones v-if="form.strip.present" part="basic" />
-				<v-alert v-else dense outlined type="info" class="mb-0">{{ t.noStripInfo }}</v-alert>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-led-strip-variant</v-icon>{{ t.stripTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ t.stripWhat }}</div>
+			<div class="help-tip-row"><v-switch v-model="form.strip.present" dense class="mt-0 mb-3" hide-details :label="t.stripSwitch" /></div>
+				<help-line class="mb-2" :text="t.stripSwitchHelp" />
+			<strip-zones v-if="form.strip.present" part="basic" />
+			<v-alert v-else dense outlined type="info" class="mb-0">{{ t.noStripInfo }}</v-alert>
+		</div>
 
 		<!-- ===== 2. On-screen indicator ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.screenTitle }}</div>
-					<help-tip :title=" t.screenTitle ">{{ t.screenWhat }}</help-tip></div>
-				<state-badge :ind="lights.indicator" />
-				<div class="text-caption text-faint mt-3">{{ t.screenWhere }}</div>
-				<ul class="text-caption text-faint mt-1">
-					<li v-for="w in screenPlaces" :key="w">{{ w }}</li>
-				</ul>
-				<div class="text-caption mt-2"><v-icon x-small class="mr-1">mdi-information-outline</v-icon>{{ t.screenAlways }}</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<div class="help-tip-row mb-1"><h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.screenTitle }}</h4>
+				</div>
+				<help-line class="mb-2" :text="t.screenWhat" />
+			<state-badge :ind="lights.indicator" />
+			<div class="text-caption text-faint mt-3">{{ t.screenWhere }}</div>
+			<ul class="text-caption text-faint mt-1">
+				<li v-for="w in screenPlaces" :key="w">{{ w }}</li>
+			</ul>
+			<div class="text-caption mt-2"><v-icon x-small class="mr-1">mdi-information-outline</v-icon>{{ t.screenAlways }}</div>
+		</div>
 
 		<!-- ===== 3. Board LEDs ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-chip</v-icon>{{ t.boardTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ lights.stripPresent ? t.boardWhatStrip : t.boardWhatNoStrip }}</div>
-				<v-switch v-model="form.leds_board.active" :label="t.boardSwitch" dense hide-details class="mt-0" />
-				<template v-if="form.leds_board.active">
-					<div class="group-title mt-3">{{ t.boardWhich }}</div>
-					<div class="board-leds">
-						<div v-for="l in leds" :key="l.id" class="board-led-row">
-							<v-checkbox v-model="form.leds_board.leds" :value="l.id" dense hide-details class="mt-0 pt-0" />
-							<span class="board-led" :class="{ 'lx-blink_slow': l.id === 'can' && canBlink === 'always' }" :style="{ background: l.css, boxShadow: '0 0 6px ' + l.css }" />
-							<div>
-								<div class="text-body-2">{{ l.name }}</div>
-								<div class="text-caption text-faint">{{ l.desc }}</div>
-							</div>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-chip</v-icon>{{ t.boardTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ lights.stripPresent ? t.boardWhatStrip : t.boardWhatNoStrip }}</div>
+			<v-switch v-model="form.leds_board.active" :label="t.boardSwitch" dense hide-details class="mt-0" />
+			<template v-if="form.leds_board.active">
+				<div class="group-title mt-3">{{ t.boardWhich }}</div>
+				<div class="board-leds">
+					<div v-for="l in leds" :key="l.id" class="board-led-row">
+						<v-checkbox v-model="form.leds_board.leds" :value="l.id" dense hide-details class="mt-0 pt-0" />
+						<span class="board-led" :class="{ 'lx-blink_slow': l.id === 'can' && canBlink === 'always' }" :style="{ background: l.css, boxShadow: '0 0 6px ' + l.css }" />
+						<div>
+							<div class="text-body-2">{{ l.name }}</div>
+							<div class="text-caption text-faint">{{ l.desc }}</div>
 						</div>
 					</div>
-					<v-alert v-if="!form.leds_board.leds.length" dense outlined type="warning" class="mt-2 mb-0">{{ t.pickOne }}</v-alert>
+				</div>
+				<v-alert v-if="!form.leds_board.leds.length" dense outlined type="warning" class="mt-2 mb-0">{{ t.pickOne }}</v-alert>
 
-					<div class="group-title mt-4">{{ t.thresholds }}</div>
-					<div class="d-flex flex-wrap" style="gap:12px">
-						<wf-field id="lf-13" :label="t.vinMin" style="max-width:260px"><template #help><help-tip :title="t.vinMin">{{ t.vinMinHelp }}</help-tip></template><v-text-field id="lf-13" v-model.number="form.leds_board.vin_min" type="number" step="0.5" min="0" suffix="V" dense outlined hide-details :aria-label="t.vinMin" /></wf-field>
-						<wf-field id="lf-14" :label="t.v12Min" style="max-width:260px"><template #help><help-tip :title="t.v12Min">{{ t.v12MinHelp }}</help-tip></template><v-text-field id="lf-14" v-model.number="form.leds_board.v12_min" type="number" step="0.5" min="0" suffix="V" dense outlined hide-details :aria-label="t.v12Min" /></wf-field>
-					</div>
+				<div class="group-title mt-4">{{ t.thresholds }}</div>
+				<div class="d-flex flex-wrap" style="gap:12px">
+					<wf-field id="lf-13" :label="t.vinMin" style="max-width:260px"><v-text-field id="lf-13" v-model.number="form.leds_board.vin_min" type="number" step="0.5" min="0" suffix="V" dense outlined hide-details :aria-label="t.vinMin" /></wf-field>
+					<wf-field id="lf-14" :label="t.v12Min" style="max-width:260px"><v-text-field id="lf-14" v-model.number="form.leds_board.v12_min" type="number" step="0.5" min="0" suffix="V" dense outlined hide-details :aria-label="t.v12Min" /></wf-field>
+				</div>
 
-					<v-select
-						v-model="canBlink" :items="canBlinkItems" :label="$t('plugins.WorkshopLights.tabOutputs.can_blink')"
-						dense outlined hide-details class="mt-3" style="max-width:620px"
-					/>
+				<v-select
+					v-model="canBlink" :items="canBlinkItems" :label="$t('plugins.WorkshopLights.tabOutputs.can_blink')"
+					dense outlined hide-details class="mt-3" style="max-width:620px"
+				/>
 
-					<wf-field v-if="lights.stripPresent" id="lf-with-lighting" :label="$t('plugins.WorkshopLights.tabOutputs.with_lighting')" class="mt-3" style="max-width:520px">
-						<template #help><help-tip :title="$t('plugins.WorkshopLights.tabOutputs.with_lighting')">{{ $t('plugins.WorkshopLights.tabOutputs.with_lighting_help') }}</help-tip></template>
-						<v-select id="lf-with-lighting" v-model="form.leds_board.with_lighting" :items="withLightingItems" :aria-label="$t('plugins.WorkshopLights.tabOutputs.with_lighting')" dense outlined hide-details />
-					</wf-field>
-					<div v-if="lights.stripPresent" class="d-flex align-center mt-3" style="max-width:420px">
-						<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.brightness }}</span>
-						<v-slider v-model="form.leds_board.brightness" min="1" max="255" hide-details thumb-label dense />
-					</div>
+				<wf-field v-if="lights.stripPresent" id="lf-with-lighting" :label="$t('plugins.WorkshopLights.tabOutputs.with_lighting')" class="mt-3" style="max-width:520px">
+					<v-select id="lf-with-lighting" v-model="form.leds_board.with_lighting" :items="withLightingItems" :aria-label="$t('plugins.WorkshopLights.tabOutputs.with_lighting')" dense outlined hide-details />
+				</wf-field>
+				<div v-if="lights.stripPresent" class="d-flex align-center mt-3" style="max-width:420px">
+					<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.brightness }}</span>
+					<v-slider v-model="form.leds_board.brightness" min="1" max="255" hide-details thumb-label dense />
+				</div>
 
-					<div class="group-title mt-4">{{ t.preview }}</div>
-					<!-- status zone: neutral grey dots (its colour depends on the state, not on this card); the board
-						LEDs after them. Following the lighting (automatic status lights off): all in the lighting colour. -->
-					<div class="board-view">
-						<template v-if="lights.stripPresent">
-							<span v-for="k in stateLeds" :key="'s' + k" class="board-view-led" :class="{ 'zone-gray': !followsLighting }"
-								:style="followsLighting ? lightingStyle : null" :title="t.statusZoneLed" />
-						</template>
-						<span v-for="d in preview" :key="d.id" class="board-view-led" :class="{ 'lx-blink_slow': d.blink && !followsLighting }"
-							:style="followsLighting ? lightingStyle : { background: d.css, boxShadow: d.on ? '0 0 6px ' + d.css : 'none' }" :title="d.name + ': ' + d.text" />
-					</div>
-					<div v-if="lights.stripPresent" class="d-flex flex-wrap align-center text-caption text-faint mt-1" style="gap:4px 16px">
-						<span class="d-flex align-center"><span class="legend-led zone-gray mr-1" />{{ t.statusZoneLed }}</span>
-						<span class="d-flex align-center"><span class="legend-led legend-board mr-1" />{{ t.boardTitle }}</span>
-					</div>
-					<div class="text-caption text-faint mt-1">{{ followsLighting ? $t('plugins.WorkshopLights.tabOutputs.preview_follow_lighting') : (lights.stripPresent ? $t('plugins.WorkshopLights.tabOutputs.preview_status_zone_grey') : t.previewNoStrip) }}</div>
-					<v-alert v-if="lights.stripPresent && cut" dense outlined type="warning" class="mt-2 mb-0">{{ t.tooFew }}</v-alert>
-					<div class="text-caption text-faint mt-2">{{ t.takeOver }}</div>
-				</template>
-			</v-card-text>
-		</v-card>
+				<div class="group-title mt-4">{{ t.preview }}</div>
+				<!-- status zone: neutral grey dots (its colour depends on the state, not on this card); the board
+					LEDs after them. Following the lighting (automatic status lights off): all in the lighting colour. -->
+				<div class="board-view">
+					<template v-if="lights.stripPresent">
+						<span v-for="k in stateLeds" :key="'s' + k" class="board-view-led" :class="{ 'zone-gray': !followsLighting }"
+							:style="followsLighting ? lightingStyle : null" :title="t.statusZoneLed" />
+					</template>
+					<span v-for="d in preview" :key="d.id" class="board-view-led" :class="{ 'lx-blink_slow': d.blink && !followsLighting }"
+						:style="followsLighting ? lightingStyle : { background: d.css, boxShadow: d.on ? '0 0 6px ' + d.css : 'none' }" :title="d.name + ': ' + d.text" />
+				</div>
+				<div v-if="lights.stripPresent" class="d-flex flex-wrap align-center text-caption text-faint mt-1" style="gap:4px 16px">
+					<span class="d-flex align-center"><span class="legend-led zone-gray mr-1" />{{ t.statusZoneLed }}</span>
+					<span class="d-flex align-center"><span class="legend-led legend-board mr-1" />{{ t.boardTitle }}</span>
+				</div>
+				<div class="text-caption text-faint mt-1">{{ followsLighting ? $t('plugins.WorkshopLights.tabOutputs.preview_follow_lighting') : (lights.stripPresent ? $t('plugins.WorkshopLights.tabOutputs.preview_status_zone_grey') : t.previewNoStrip) }}</div>
+				<v-alert v-if="lights.stripPresent && cut" dense outlined type="warning" class="mt-2 mb-0">{{ t.tooFew }}</v-alert>
+				<div class="text-caption text-faint mt-2">{{ t.takeOver }}</div>
+			</template>
+		</div>
+
+		<!-- one help for the section, at its foot (FAMILIA-REDISENO 3, C4): the intro that opened the tab, the strip fields (they folded inside
+		     StripZones) and the board thresholds (they folded inside the board group) -->
+		<help-fold class="mt-3" :what="t.intro" :items="helpItems" />
 	</div>
 </template>
 
@@ -98,7 +95,8 @@ import i18n from '../../i18n'
 
 import StripZones from './StripZones.vue'
 import StateBadge from './StateBadge.vue'
-import HelpTip from './HelpTip.vue' // vue/_shared36
+import HelpFold from './HelpFold.vue' // vue/_shared36
+import HelpLine from './HelpLine.vue' // vue/_shared36
 import { BOARD_LEDS } from './lights-shared.js'
 import { rgbwCss } from './color.js'
 import { pluginActive } from './workshop-ids.js' // the side bar is another plugin: nothing about it when it is absent
@@ -131,6 +129,14 @@ const T = {
 	vinMinHelp: i18n.t('plugins.WorkshopLights.tabOutputs.below_this_voltage_the_vin_led'),
 	v12Min: i18n.t('plugins.WorkshopLights.tabOutputs.minimum_12_v'),
 	v12MinHelp: i18n.t('plugins.WorkshopLights.tabOutputs.below_this_voltage_the_12_v'),
+	// the fields of the strip (StripZones part basic): their help is in the one fold of this section
+	lightingLeds: i18n.t('plugins.WorkshopLights.stripZones.lighting_leds'),
+	lightingLedsHelp: i18n.t('plugins.WorkshopLights.stripZones.the_ones_that_give_work_light'),
+	statusLeds: i18n.t('plugins.WorkshopLights.stripZones.status_leds'),
+	statusLedsHelp: i18n.t('plugins.WorkshopLights.stripZones.the_ones_that_show_the_mode'),
+	outputNumber: i18n.t('plugins.WorkshopLights.stripZones.board_output_e'),
+	outputHintWith: i18n.t('plugins.WorkshopLights.stripZones.config_g_line'),
+	outputHint: i18n.t('plugins.WorkshopLights.stripZones.number_in_m950_e_n_change'),
 	brightness: i18n.t('plugins.WorkshopLights.tabOutputs.brightness'),
 	preview: i18n.t('plugins.WorkshopLights.tabOutputs.preview_with_what_you_have_on'),
 	previewNoStrip: i18n.t('plugins.WorkshopLights.tabOutputs.the_board_leds_in_this_order'),
@@ -147,12 +153,33 @@ const T = {
 };
 
 export default {
-	components: { WfField, StripZones, StateBadge, HelpTip },
+	components: { HelpFold, HelpLine, WfField, StripZones, StateBadge },
 	inject: ['lights'],
 	data() {
 		return { t: T };
 	},
 	computed: {
+		// the one help of the section (at its foot): the strip fields while there is a strip, the board thresholds while the board LEDs are on
+		helpItems() {
+			const t = this.t;
+			const items = [];
+			if (this.form.strip.present) {
+				const line = this.lights.m950.line;
+				items.push(
+					{ title: t.lightingLeds, what: t.lightingLedsHelp },
+					{ title: t.statusLeds, what: t.statusLedsHelp },
+					{ title: t.outputNumber, what: line ? t.outputHintWith + line.split(';')[0].trim() : t.outputHint }
+				);
+			}
+			if (this.form.leds_board.active) {
+				items.push(
+					{ title: t.vinMin, what: t.vinMinHelp },
+					{ title: t.v12Min, what: t.v12MinHelp },
+					{ title: this.$t('plugins.WorkshopLights.tabOutputs.with_lighting'), what: this.$t('plugins.WorkshopLights.tabOutputs.with_lighting_help') }
+				);
+			}
+			return items;
+		},
 		// the second place is the side bar (WorkshopControlBar)
 		screenPlaces() {
 			return this.t.screenPlaces.filter((w, i) => i === 0 || pluginActive(this.$store, 'bar'));

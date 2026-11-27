@@ -2,7 +2,7 @@
 	<div class="color-rgbw">
 		<v-menu v-model="open" :close-on-content-click="false" offset-y max-width="320">
 			<template v-slot:activator="{ on, attrs }">
-				<button type="button" class="sample-btn" v-bind="attrs" v-on="on">
+				<button type="button" class="sample-btn" :class="{ compact }" :title="compact ? name : null" v-bind="attrs" v-on="on">
 					<span class="sample" :style="{ backgroundColor: css }" />
 					<span class="name-col">
 						<span class="text-body-2 d-block">{{ name }}</span>
@@ -44,7 +44,9 @@ export default {
 	props: {
 		value: { type: Object, required: true },
 		name: { type: String, default: '' },
-		withBrightness: { type: Boolean, default: false }
+		withBrightness: { type: Boolean, default: false },
+		// fixed 44 px chip, one-line name with ellipsis (cards that must line up)
+		compact: { type: Boolean, default: false }
 	},
 	data() {
 		return {
@@ -127,6 +129,17 @@ export default {
 	line-height: 1.3;
 }
 .values {
+	white-space: nowrap;
+}
+/* in the state cards the colour chip sits beside the selects: a field of the family scale (m 36; owner 2026-11-23) */
+.sample-btn.compact {
+	height: var(--wf-size-m, 36px);
+	box-sizing: border-box;
+	padding: 0 10px;
+}
+.sample-btn.compact .name-col > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 .suggested {

@@ -8,9 +8,10 @@
 		<page-header :lead="t.lead" icon="mdi-led-strip-variant" :title="t.title" :loading="!saved && !msgError && !readRefused" :reasons="saved || readRefused ? [] : [{ level: 'warn', text: t.cantRead }]">
 			<v-chip small outlined class="wf-state-chip" :style="{ '--wf-dotc': bannerDot, '--wf-dotd': 'inline-block' }" :title="bannerStateHelp">{{ bannerStateText }}</v-chip>
 			<v-menu offset-y :close-on-content-click="false">
+				<!-- a chip of the bar (28 to the eye, the family's 40 px area), not a select: no arrow; a tap shows the three outputs -->
 				<template v-slot:activator="{ on, attrs }">
 					<v-chip small outlined class="lights-outputs-chip" :title="t.outputsHelp" v-bind="attrs" v-on="on">
-						{{ $t('plugins.WorkshopLights.lights.banner_outputs', { n: bannerOutputs.active, total: bannerOutputs.total }) }}<v-icon x-small right>mdi-chevron-down</v-icon>
+						{{ $t('plugins.WorkshopLights.lights.banner_outputs', { n: bannerOutputs.active, total: bannerOutputs.total }) }}
 					</v-chip>
 				</template>
 				<v-list dense class="lights-outputs-list">
@@ -27,7 +28,7 @@
 		</page-header>
 
 
-		<!-- The page could not be read because of the session or the role: there is no banner for it (owner 2026-11-06). The chip of the bar
+		<!-- The page could not be read because of the session or the role: there is no banner for it (2026-11-06). The chip of the bar
 		     says "Sign in", every locked section carries its lock and the role that opens it in the side bar, and the section that is open
 		     shows the cover with the same sentence: a fourth copy above the bar only repeated them. readRefused still keeps the health chip
 		     calm (no "cannot read" while the cause is the session). -->
@@ -36,6 +37,9 @@
 		<div class="st-layout mb-3">
 		<side-tabs v-model="tab" :items="tabs" />
 		<div class="st-body">
+		<!-- the section is ONE card (FAMILIA-REDISENO 3): its head carries the icon in the color of the section and a 4 % tint; the blocks of the
+		     tab are groups inside it (.wf-group: a 13/600 title and a divider), never grey sub-cards -->
+		<card-head v-if="!lockedTab && tabNow" :icon="tabNow.icon" :title="tabNow.label" />
 		<locked-cover v-if="lockedTab" :needed="lockedTab" :items="tabs" :value="tab" />
 		<tab-summary v-else-if="tab === 'summary'" />
 		<tab-outputs v-else-if="tab === 'outputs'" />
@@ -52,15 +56,14 @@
 		<session-notice v-else-if="note && msgError && !atLeast('technician')" kind="error" :text="note" />
 
 		<!-- ===== Save ===== -->
-		<div v-if="atLeast('technician') && (changed || note)" class="save-bar">
+		<div v-if="atLeast('technician') && (changed || note || saveAct.state !== 'idle')" class="save-bar">
 			<session-notice v-if="note && refusal" variant="reason" :kind="refusal" needed="technician" :action="refusedAction" class="mr-3" />
 			<span v-else-if="note" class="text-body-2 mr-3" :class="msgError ? 'error--text' : 'success--text'">{{ note }}</span>
 			<span v-else-if="changed" class="text-body-2 warning--text mr-3">{{ t.unsaved }}</span>
 			<v-btn small :disabled="!changed" text class="mr-2" @click="discard()">{{ t.discard }}</v-btn>
 			<span v-if="changed && !numbersOk" class="text-body-2 error--text mr-3">{{ t.checkNumbers }}</span>
-			<v-btn small color="primary" :disabled="!saved || !changed || !numbersOk || !canSave" :loading="saving" @click="save()">
-				<v-icon left>mdi-content-save</v-icon>{{ t.save }}
-			</v-btn>
+			<wf-action-button :action="saveAct" main :disabled="!saved || !changed || !numbersOk || !canSave" :label="t.save" @run="save()" />
+			<wf-result v-if="saveAct.state !== 'error'" class="ml-3" :action="saveAct" />
 			<lock-reason :ops="saveOps" min="technician" class="ml-3" :subject="$t('plugins.WorkshopLights.subjects.save_lights')" />
 		</div>
 	</v-container>
@@ -77,6 +80,7 @@ import StartupPanel from './StartupPanel.vue' // start-up card (vue/_shared)
 import PageHeader from './PageHeader.vue' // header of every page (vue/_shared)
 import { rowsLights } from './startup-rows.js'
 import SideTabs from './SideTabs.vue'
+import CardHead from './CardHead.vue' // the head of a card: icon in the color of the section, title, 4 % tint (vue/_shared36)
 import LockedCover from './LockedCover.vue' // the cover of a tab the role cannot open (vue/_shared36)
 import { refusalCauseNow, refusalNow } from './session-refusal.js' // a refusal told by its cause (vue/_shared36)
 import SessionNotice from './SessionNotice.vue' // the notice by cause (vue/_shared36)
@@ -98,12 +102,16 @@ import TabAdvanced from './TabAdvanced.vue'
 import { copy } from './lights-shared.js'
 import { accessCanMixin } from './reason-mixin.js' // what the role and the service say (vue/_shared36)
 import { workshopCan } from './workshop-auth.js'
+import WfActionButton from './WfActionButton.vue' // vue/_shared36 (FASE2)
+import WfResult from './WfResult.vue' // vue/_shared36 (FASE2)
+import { createAction } from './workshop-action.js' // vue/_shared36 (FASE2)
 import LockReason from './LockReason.vue' // vue/_shared36
 import { SAVE_OPS, SCREEN_OPS, groupAllowed } from './access-groups.js'
 import { lockedItems, lockedNeed } from './role-view.js'
 import { pluginOf, pluginActive } from './workshop-ids.js' // Id nuevo o viejo del plugin
 import { serviceTexts, serviceDefaultName } from './service-text.js'
 import { currentMode } from './current-mode.js' // the one rule of the real mode (vue/_shared36)
+import { formFromPublicView } from './public-view.js' // note 8: the summary without a session, from the published lightsView
 
 // Factory names of scenes, extra zones and strips (WorkshopService lights_config.DEFAULT_NAME_KEYS): a name that is still
 // one of them, in either language, is shown (and saved again) in the language of this DWC; a renamed one stays as it is.
@@ -204,7 +212,7 @@ export default {
 	// what the previous person read (the configuration, the refusal they saw) must not stay when the identity changes; onSessionChange reads it again
 	sessionData: ['saved', 'form', 'catalog', 'm950', 'm950All', 'msg', 'msgError', 'refused', 'readError', 'countN', 'stripSel', 'copyConfig'],
 	sessionErrors: ['msg', 'msgError', 'refused', 'readError'], // what a refusal or a failure said: cleared when the person signs in, out or changes role (role-mixin.js)
-	components: { LockReason, SessionNotice, PageHeader, SideTabs, LockedCover, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
+	components: { WfActionButton, WfResult, LockReason, SessionNotice, PageHeader, SideTabs, CardHead, LockedCover, ServiceNotice: ServiceNotice, StartupPanel: StartupPanel, TabSummary, TabOutputs, TabLighting, TabStates, TabColors, TabEffects, TabAdvanced },
 	provide() {
 		// the tabs read and change the page through this object
 		return { lights: this };
@@ -219,7 +227,7 @@ export default {
 			catalog: {},
 			m950: { line: null, total: null },
 			m950All: {},
-			saving: false,
+			saveAct: createAction({ run: () => this.doSave() }), // the save (workshop-action.js)
 			msg: null,
 			msgError: false,
 			readError: null, // the error of lights.get when it was refused (no session / role); null otherwise. The sentence is computed from it
@@ -228,9 +236,6 @@ export default {
 			stripEnlarged: false,
 			stripSel: null, // null = main strip; number = index in form.strips_extra
 			testing: null,
-			armed: null,
-			armedTimer: null,
-			applyingM950: false,
 			requestRestart: false,
 			copyConfig: '',
 			busyLight: false,
@@ -323,6 +328,10 @@ export default {
 			// without an LED strip there is no work light to control
 			return this.stripPresent ? shown : shown.filter(k => k.id !== 'lighting');
 		},
+		// the tab now open (its icon and label head the card of the section)
+		tabNow() {
+			return this.tabs.find(x => x.id === this.tab) || null;
+		},
 		// the role that opens the tab now open, or '' when this role may
 		lockedTab() {
 			return lockedNeed(this.tabsDefinition(), this.tab, op => this.roleCan(op));
@@ -351,6 +360,10 @@ export default {
 			// a service from before the redesign: only the text and the colour
 			const txt = this.read('statusLightText');
 			return txt ? { state: { id: 'base', name: txt, hex: this.read('statusLightColor') || '#616161', effect: 'steady' }, active: [], reason: '' } : null;
+		},
+		// plugin data lightsView: the sanitized read-only settings anybody may read (note 8; WorkshopService docs/PUBLIC-STATE.md)
+		publicView() {
+			return prop(this.pluginData, 'lightsView') || null;
 		},
 		// plugin data lightsInfo: history, power, night dimming, board LEDs
 		info() {
@@ -393,6 +406,10 @@ export default {
 		}
 	},
 	watch: {
+		// signed out the summary follows the published view (somebody saved the settings on another screen)
+		publicView() {
+			this.usePublicView();
+		},
 		// a tab the role does not see (a tab remembered by the browser, or the role changed) falls back to the summary
 		tabs: {
 			immediate: true,
@@ -425,7 +442,7 @@ export default {
 		this.load();
 	},
 	beforeDestroy() {
-		clearTimeout(this.armedTimer);
+		this.saveAct.dispose();
 	},
 	methods: {
 		// what the TABLE of the role says (the tabs are locked by role; the groups of buttons follow the service)
@@ -447,6 +464,7 @@ export default {
 		},
 		// the person signed in or out, or the role changed: read the configuration again (it may have been refused before)
 		onSessionChange() {
+			this.saveAct.reset(); // what was in the air belonged to the person who left
 			this.load();
 		},
 		tabSaved() {
@@ -496,11 +514,21 @@ export default {
 				// a refusal (no session / role) is said with its cause and stops the loading; only a real failure says "cannot read"
 				if (refusalCauseNow(e)) {
 					this.readError = e;
+					this.usePublicView(); // no session: the summary paints the published read-only view (note 8)
 				} else {
 					this.readError = null;
 					this.message(errorKind(e) === 'other' ? T.cantRead : errorText(e, ts), true);
 				}
 			}
+		},
+		// Without a session lights.get answers 401: the summary (for everybody) paints the read-only view the service publishes. Only the form the
+		// summary reads is filled; `saved` stays empty (the start-up card and the save bar keep saying the settings were not read).
+		usePublicView() {
+			if (this.readKind !== 'session') return;
+			const c = formFromPublicView(this.publicView, FORM_EMPTY);
+			if (!c) return;
+			defaultNames(c);
+			this.form = c;
 		},
 		message(text, error) {
 			this.msg = text;
@@ -513,8 +541,11 @@ export default {
 			this.message('', false);
 			this.refused = { error: e, action };
 		},
-		async save() {
-			this.saving = true;
+		save() {
+			this.saveAct.run({});
+		},
+		// the call of the save (workshop-action.js tells sending / done); a failure keeps its note: a refusal by its cause, never the red "could not" line
+		async doSave() {
 			this.msg = null;
 			this.refused = null;
 			try {
@@ -527,29 +558,16 @@ export default {
 				if (this.lightOn) {
 					await api('light.set', { on: true });
 				}
-				this.message(T.saved, false);
 			} catch (e) {
 				this.fail(T.cantSave, e, 'plugins.WorkshopLights.lights.action_save');
-			} finally {
-				this.saving = false;
+				throw e;
 			}
+			return { text: T.saved };
 		},
 		discard() {
 			this.form = copy(this.saved);
 			this.msg = null;
 			this.refused = null;
-		},
-		// double tap: the first arms, the second does it (4 s)
-		arm(that, fn) {
-			if (this.armed === that) {
-				this.armed = null;
-				clearTimeout(this.armedTimer);
-				fn();
-				return;
-			}
-			this.armed = that;
-			clearTimeout(this.armedTimer);
-			this.armedTimer = setTimeout(() => { this.armed = null; }, 4000);
 		},
 		async waitfor(ms) {
 			await new Promise(r => setTimeout(r, ms));
@@ -653,6 +671,10 @@ export default {
 <style scoped>
 .text-faint {
 	color: var(--tp-faint);
+}
+/* the outputs chip of the page bar: a chip of the bar, 28 to the eye (FAMILIA-REDISENO 3); the family gives every clickable chip its 40 px area */
+.lights-outputs-chip {
+	height: 28px;
 }
 /* the outputs menu of the page bar: the line of help of each output wraps instead of being cut */
 .lights-outputs-list {

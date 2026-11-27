@@ -55,3 +55,23 @@ export function canEnable(pins, usedByOther) {
 export function outputLabel(output) {
 	return output && output.kind === 'pi' ? { kind: 'pi', pin: output.pin } : { kind: 'duet', pin: null };
 }
+
+// the pins grouped by reason (the list shows a group once, not one repeated line per pin):
+// 'busy' (used by the system), 'free' (free but a strip does not work there), 'valid' (the data pin of an active, free SPI bus)
+export function pinGroupsOf(pins) {
+	const list = pins || [];
+	const groups = [
+		{ id: 'valid', pins: list.filter(p => p.strip_spi) },
+		{ id: 'free', pins: list.filter(p => !p.strip_spi && p.free) },
+		{ id: 'busy', pins: list.filter(p => !p.strip_spi && !p.free) }
+	];
+	return groups.filter(g => g.pins.length);
+}
+
+// the command that enables the SPI bus a strip can use, to be pasted in a terminal ON the Pi (it backs up config.txt first).
+// 'spi1' = the usual case (DSF talks to the Duet over SPI 0): overlay spi1-1cs gives the bus SPI 1 (MOSI = GPIO20).
+// 'spi0' = DSF uses SPI 1: the free bus is SPI 0 (dtparam=spi=on, MOSI = GPIO10).
+export function enableCommandOf(bus) {
+	const line = bus === 'spi0' ? 'dtparam=spi=on' : 'dtoverlay=spi1-1cs';
+	return "sudo cp /boot/firmware/config.txt /boot/firmware/config.txt.bak-$(date +%Y%m%d) && echo '" + line + "' | sudo tee -a /boot/firmware/config.txt && sudo reboot";
+}

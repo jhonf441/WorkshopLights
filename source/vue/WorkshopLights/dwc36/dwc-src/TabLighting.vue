@@ -1,117 +1,91 @@
 <template>
 	<div>
-		<div class="text-body-2 text-faint mb-3">{{ t.intro }}</div>
-
 		<!-- ===== Work light now ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.lightWhat }}</div>
-				<div class="d-flex flex-wrap" style="gap:24px">
-					<div class="help-tip-row"><v-switch :input-value="lights.lightOn" dense class="mt-0" :loading="lights.busyLight" :disabled="!zonesAllowed" @change="lights.changeLight" hide-details :label="t.lightSwitch" /><help-tip :title="t.lightSwitch">{{ t.lightSwitchHelp }}</help-tip></div>
-					<template v-if="lights.saved">
-						<div v-for="q in zoneSwitches" :key="q.key" class="help-tip-row"><v-switch :input-value="q.z.on" dense class="mt-0" :loading="lights.busyZone === q.key" :disabled="!zonesAllowed" @change="changeZone(q, $event)" hide-details :label="q.label" /><help-tip :title="q.label">{{ t.zoneSwitchHelp }}</help-tip></div>
-					</template>
-				</div>
-				<lock-reason :ops="zoneOps" min="technician" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.lighting_zones')" />
-				<div class="group-title mt-4">{{ t.colorTitle }}</div>
-				<div class="text-caption text-faint mb-1">{{ t.colorHelp }}</div>
-				<div class="color-row"><color-rgbw v-model="form.light_color" :name="t.lightTitle" with-brightness /></div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.lightWhat }}</div>
+			<div class="d-flex flex-wrap" style="gap:24px">
+				<div class="help-tip-row"><v-switch :input-value="lights.lightOn" dense class="mt-0" :loading="lights.busyLight" :disabled="!zonesAllowed" @change="lights.changeLight" hide-details :label="t.lightSwitch" /></div>
+				<template v-if="lights.saved">
+					<div v-for="q in zoneSwitches" :key="q.key" class="help-tip-row"><v-switch :input-value="q.z.on" dense class="mt-0" :loading="lights.busyZone === q.key" :disabled="!zonesAllowed" @change="changeZone(q, $event)" hide-details :label="q.label" /></div>
+				</template>
+			</div>
+			<lock-reason :ops="zoneOps" min="technician" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.lighting_zones')" />
+			<div class="group-title mt-4">{{ t.colorTitle }}</div>
+			<div class="text-caption text-faint mb-1">{{ t.colorHelp }}</div>
+			<div class="color-row"><color-rgbw v-model="form.light_color" :name="t.lightTitle" with-brightness /></div>
+		</div>
 
 		<!-- ===== Scenes ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="d-flex align-center mb-1">
-					<div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-palette-swatch-outline</v-icon>{{ t.scenesTitle }}</div>
-					<v-spacer />
-					<v-btn small outlined :disabled="form.work_light.scenes.length >= 8" @click="addScene"><v-icon small left>mdi-plus</v-icon>{{ t.addScene }}</v-btn>
-				</div>
-				<div class="text-caption text-faint mb-3">{{ t.scenesWhat }}</div>
-				<div class="scenes">
-					<div v-for="(s, i) in form.work_light.scenes" :key="s.id" class="scene" :class="{ active: form.work_light.scene === s.id }">
-						<div class="d-flex align-center mb-2" style="gap:6px">
-							<v-text-field v-model="s.name" :label="t.sceneName" dense outlined hide-details maxlength="24" />
-							<v-btn icon small :title="t.removeScene" @click="form.work_light.scenes.splice(i, 1)"><v-icon small>mdi-close</v-icon></v-btn>
-						</div>
-						<color-rgbw v-model="s.color" :name="s.name" with-brightness />
-						<v-btn small block :color="form.work_light.scene === s.id ? 'primary' : ''" outlined class="mt-2" :title="t.applySceneHelp" @click="lights.applyScene(s)">
-							<v-icon small left>mdi-lightbulb-on</v-icon>{{ t.applyScene }}
-						</v-btn>
+		<div class="wf-group">
+			<div class="d-flex align-center mb-1">
+				<h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-palette-swatch-outline</v-icon>{{ t.scenesTitle }}</h4>
+				<v-spacer />
+				<v-btn small outlined :disabled="form.work_light.scenes.length >= 8" @click="addScene"><v-icon small left>mdi-plus</v-icon>{{ t.addScene }}</v-btn>
+			</div>
+			<div class="text-caption text-faint mb-3">{{ t.scenesWhat }}</div>
+			<div class="scenes">
+				<div v-for="(s, i) in form.work_light.scenes" :key="s.id" class="scene" :class="{ active: form.work_light.scene === s.id }">
+					<div class="d-flex align-center mb-2" style="gap:6px">
+						<v-text-field v-model="s.name" :label="t.sceneName" dense outlined hide-details maxlength="24" />
+						<v-btn icon small :title="t.removeScene" @click="form.work_light.scenes.splice(i, 1)"><v-icon small>mdi-close</v-icon></v-btn>
 					</div>
+					<color-rgbw v-model="s.color" :name="s.name" with-brightness />
+					<v-btn small block :color="form.work_light.scene === s.id ? 'primary' : ''" outlined class="mt-2" :title="t.applySceneHelp" @click="lights.applyScene(s)">
+						<v-icon small left>mdi-lightbulb-on</v-icon>{{ t.applyScene }}
+					</v-btn>
 				</div>
-				<div v-if="lights.changed" class="text-caption text-faint mt-2">{{ t.saveFirst }}</div>
-			</v-card-text>
-		</v-card>
+			</div>
+			<div v-if="lights.changed" class="text-caption text-faint mt-2">{{ t.saveFirst }}</div>
+		</div>
 
 		<!-- ===== Auto off / auto on ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-timer-outline</v-icon>{{ t.autoTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ autoWhat }}</div>
-				<div class="d-flex flex-wrap align-center" style="gap:16px">
-					<div class="help-tip-row"><v-switch v-model="form.work_light.auto_off.enabled" dense class="mt-0" hide-details :label="t.autoOff" /><help-tip :title="t.autoOff">{{ t.autoOffHelp }}</help-tip></div>
-					<v-text-field v-model.number="form.work_light.auto_off.minutes" type="number" min="1" max="600" suffix="min" :label="t.autoOffMinutes" dense outlined hide-details style="max-width:170px" :disabled="!form.work_light.auto_off.enabled" />
-				</div>
-				<div class="help-tip-row mt-3"><v-switch v-model="form.work_light.auto_on_job" dense hide-details :label="t.autoOn" /><help-tip :title="t.autoOn">{{ t.autoOnHelp }}</help-tip></div>
-				<div v-if="hasCamera" class="text-caption text-faint mt-2"><v-icon x-small class="mr-1">mdi-camera</v-icon>{{ t.cameraNote }}</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-timer-outline</v-icon>{{ t.autoTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ autoWhat }}</div>
+			<div class="d-flex flex-wrap align-center" style="gap:16px">
+				<div class="help-tip-row"><v-switch v-model="form.work_light.auto_off.enabled" dense class="mt-0" hide-details :label="t.autoOff" /></div>
+				<v-text-field v-model.number="form.work_light.auto_off.minutes" type="number" min="1" max="600" suffix="min" :label="t.autoOffMinutes" dense outlined hide-details style="max-width:170px" :disabled="!form.work_light.auto_off.enabled" />
+			</div>
+			<div class="help-tip-row mt-3"><v-switch v-model="form.work_light.auto_on_job" dense hide-details :label="t.autoOn" /></div>
+			<div v-if="hasCamera" class="text-caption text-faint mt-2"><v-icon x-small class="mr-1">mdi-camera</v-icon>{{ t.cameraNote }}</div>
+		</div>
 
 		<!-- ===== Night dimming ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-weather-night</v-icon>{{ t.nightTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.nightWhat }}</div>
-				<v-switch v-model="form.night.enabled" :label="t.nightSwitch" dense hide-details class="mt-0" />
-				<div class="d-flex flex-wrap align-center mt-3" style="gap:16px">
-					<v-menu v-model="nightFromMenu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="auto" :disabled="!form.night.enabled">
-						<template v-slot:activator="{ on, attrs }">
-							<v-text-field v-model="form.night.from" :label="t.nightFrom" readonly dense hide-details color="primary" style="max-width:150px" :disabled="!form.night.enabled" v-bind="attrs" v-on="on">
-								<template v-slot:prepend-inner>
-									<v-icon color="primary">mdi-clock-outline</v-icon>
-								</template>
-							</v-text-field>
-						</template>
-						<v-time-picker v-model="form.night.from" format="24hr" color="primary" @click:minute="nightFromMenu = false" />
-					</v-menu>
-					<v-menu v-model="nightToMenu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="auto" :disabled="!form.night.enabled">
-						<template v-slot:activator="{ on, attrs }">
-							<v-text-field v-model="form.night.to" :label="t.nightTo" readonly dense hide-details color="primary" style="max-width:150px" :disabled="!form.night.enabled" v-bind="attrs" v-on="on">
-								<template v-slot:prepend-inner>
-									<v-icon color="primary">mdi-clock-outline</v-icon>
-								</template>
-							</v-text-field>
-						</template>
-						<v-time-picker v-model="form.night.to" format="24hr" color="primary" @click:minute="nightToMenu = false" />
-					</v-menu>
-					<div class="d-flex align-center" style="flex:1 1 260px;max-width:420px">
-						<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.nightLevel }}: {{ form.night.level }} %</span>
-						<v-slider v-model="form.night.level" min="1" max="100" hide-details dense :disabled="!form.night.enabled" />
-					</div>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-weather-night</v-icon>{{ t.nightTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.nightWhat }}</div>
+			<v-switch v-model="form.night.enabled" :label="t.nightSwitch" dense hide-details class="mt-0" />
+			<div class="d-flex flex-wrap align-center mt-3" style="gap:16px">
+				<!-- a time written as HH:MM, the same field in every plugin (TimeField.vue, owner 2026-11-23): the Vuetify clock was the only way in -->
+				<time-field v-model="form.night.from" :label="t.nightFrom" :disabled="!form.night.enabled" />
+				<time-field v-model="form.night.to" :label="t.nightTo" :disabled="!form.night.enabled" />
+				<div class="d-flex align-center" style="flex:1 1 260px;max-width:420px">
+					<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.nightLevel }}: {{ form.night.level }} %</span>
+					<v-slider v-model="form.night.level" min="1" max="100" hide-details dense :disabled="!form.night.enabled" />
 				</div>
-				<v-switch v-model="form.night.include_work_light" :label="t.nightWork" dense hide-details class="mt-2" :disabled="!form.night.enabled" />
-				<div v-if="lights.info.night && lights.info.night.on" class="text-caption mt-2"><v-icon x-small class="mr-1">mdi-weather-night</v-icon>{{ t.nightNow }}</div>
-			</v-card-text>
-		</v-card>
+			</div>
+			<v-switch v-model="form.night.include_work_light" :label="t.nightWork" dense hide-details class="mt-2" :disabled="!form.night.enabled" />
+			<div v-if="lights.info.night && lights.info.night.on" class="text-caption mt-2"><v-icon x-small class="mr-1">mdi-weather-night</v-icon>{{ t.nightNow }}</div>
+		</div>
 
 		<!-- ===== Power ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-flash-outline</v-icon>{{ t.powerTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.powerWhat }}</div>
-				<div class="d-flex flex-wrap" style="gap:12px">
-					<wf-field id="lf-10" :label="t.perChannel" style="max-width:260px"><template #help><help-tip :title="t.perChannel">{{ t.perChannelHelp }}</help-tip></template><v-text-field id="lf-10" v-model.number="form.power.ma_per_channel" type="number" min="1" max="60" suffix="mA" dense outlined hide-details :aria-label="t.perChannel" /></wf-field>
-					<wf-field id="lf-11" :label="t.limit" style="max-width:260px"><template #help><help-tip :title="t.limit">{{ t.limitHelp }}</help-tip></template><v-text-field id="lf-11" v-model.number="form.power.limit_ma" type="number" min="0" suffix="mA" dense outlined hide-details :aria-label="t.limit" /></wf-field>
-				</div>
-				<div class="d-flex flex-wrap text-body-2 mt-3" style="gap:6px 24px">
-					<span><b>{{ t.worst }}:</b> {{ worst }} mA ({{ totalLeds }} {{ t.leds }})</span>
-					<span v-if="live"><b>{{ t.now }}:</b> {{ live.ma }} mA</span>
-				</div>
-				<v-alert v-if="form.power.limit_ma && worst > form.power.limit_ma" dense text type="warning" class="mt-2 mb-0">{{ t.worstOver }}</v-alert>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-flash-outline</v-icon>{{ t.powerTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.powerWhat }}</div>
+			<div class="d-flex flex-wrap" style="gap:12px">
+				<wf-field id="lf-10" :label="t.perChannel" style="max-width:260px"><v-text-field id="lf-10" v-model.number="form.power.ma_per_channel" type="number" min="1" max="60" suffix="mA" dense outlined hide-details :aria-label="t.perChannel" /></wf-field>
+				<wf-field id="lf-11" :label="t.limit" style="max-width:260px"><v-text-field id="lf-11" v-model.number="form.power.limit_ma" type="number" min="0" suffix="mA" dense outlined hide-details :aria-label="t.limit" /></wf-field>
+			</div>
+			<div class="d-flex flex-wrap text-body-2 mt-3" style="gap:6px 24px">
+				<span><b>{{ t.worst }}:</b> {{ worst }} mA ({{ totalLeds }} {{ t.leds }})</span>
+				<span v-if="live"><b>{{ t.now }}:</b> {{ live.ma }} mA</span>
+			</div>
+			<v-alert v-if="form.power.limit_ma && worst > form.power.limit_ma" dense text type="warning" class="mt-2 mb-0">{{ t.worstOver }}</v-alert>
+		</div>
+
+		<!-- one help for the section, at its foot (FAMILIA-REDISENO 3, C4): the intro that opened the tab and the three folds of the groups in one -->
+		<help-fold class="mt-3" :what="t.intro" :items="helpItems" />
 	</div>
 </template>
 
@@ -122,7 +96,8 @@ import i18n from '../../i18n'
 
 import ColorRgbw from './ColorRgbw.vue'
 import { pluginActive } from './workshop-ids.js' // the camera is another plugin: nothing about it when it is absent
-import HelpTip from './HelpTip.vue' // vue/_shared36
+import HelpFold from './HelpFold.vue' // vue/_shared36
+import TimeField from './TimeField.vue' // vue/_shared36
 import LockReason from './LockReason.vue' // vue/_shared36
 import { ZONE_OPS, groupAllowed } from './access-groups.js'
 import WfField from './WfField.vue' // vue/_shared36
@@ -177,12 +152,24 @@ const T = {
 };
 
 export default {
-	components: { WfField, HelpTip, ColorRgbw, LockReason },
+	components: { HelpFold, TimeField, WfField, ColorRgbw, LockReason },
 	inject: ['lights'],
 	data() {
-		return { t: T, nightFromMenu: false, nightToMenu: false, zoneOps: ZONE_OPS };
+		return { t: T, zoneOps: ZONE_OPS };
 	},
 	computed: {
+		// the one help of the section (at its foot): the blocks the work light, automatic and power cards used to fold one by one
+		helpItems() {
+			const t = this.t;
+			return [
+				{ title: t.lightSwitch, what: t.lightSwitchHelp },
+				...this.zoneSwitches.map(q => ({ title: q.label, what: t.zoneSwitchHelp })),
+				{ title: t.autoOff, what: t.autoOffHelp },
+				{ title: t.autoOn, what: t.autoOnHelp },
+				{ title: t.perChannel, what: t.perChannelHelp },
+				{ title: t.limit, what: t.limitHelp }
+			];
+		},
 		// the work light and the extra zones: the answer of the service (the table of the role until it answers)
 		zonesAllowed() {
 			return groupAllowed(ZONE_OPS, op => this.lights.canDo(op));
@@ -259,18 +246,18 @@ export default {
 	color: var(--tp-faint, #9e9e9e);
 	margin-bottom: 6px;
 }
+/* the scene editors: columns split by a line, not grey sub-cards (FAMILIA-REDISENO 3); the scene in use carries a 2 px accent line on top */
 .scenes {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-	gap: 10px;
+	gap: 8px 24px;
 }
 .scene {
-	padding: 10px;
-	border-radius: 8px;
-	background: rgba(128, 128, 128, 0.06);
-	border: 1px solid transparent;
+	padding-top: 12px;
+	border-top: 1px solid var(--wf-line, rgba(128, 128, 128, 0.25));
 }
 .scene.active {
-	border-color: #1976d2;
+	border-top: 2px solid var(--wf-accent, #1976d2);
+	padding-top: 11px;
 }
 </style>

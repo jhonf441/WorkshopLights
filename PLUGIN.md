@@ -10,7 +10,7 @@
 
 Page `/Plugins/Lights` ("Lights and status"). It controls the LED strip (NeoPixel WS2812 / SK6812) and the status light: what the machine is doing shown as colors and effects on three outputs (the LED strip, the on-screen indicator and the board LEDs), the work light with scenes, colors per mode and per state, start-up animations, and the strip layout (zones, counts, pin).
 
-Version documented: 2.8.x on DWC 3.6.3.
+Version documented: 2.13.x on DWC 3.6.3.
 
 ## 1. Requirements
 
@@ -23,7 +23,7 @@ Version documented: 2.8.x on DWC 3.6.3.
 1. Install WorkshopService.
 2. DWC > Settings > Plugins > Install `WorkshopLights-<ver>.zip`; Start if needed. Reload DWC.
 3. Open *Plugins > Lights and status*. Without a strip, switch it off in *Outputs* ("This machine has an LED strip"), and the light controls are hidden.
-4. Verify: header "All fine" and the chips of the three outputs.
+4. Verify: the page header shows "All fine" and the chip "Outputs: 2 of 3" (how many of the three outputs are on).
 
 ## 3. Functions
 
@@ -32,24 +32,24 @@ The page is "Lights and status" (side menu: Plugins > Lights). Its side bar has 
 ### Page header (always visible)
 
 #### Header strip: state and output chips
-- What: the overall state ("All fine"), the current top state with its color dot (here "Lighting - automatic status off") and three chips: "LED strip", "On-screen indicator" and "Board LEDs off".
-- Where: top right of the page header (red rectangle, picture 1).
+- What: the overall state ("All fine"), the version of the plugin, the current top state with its color dot (here "Lighting - automatic status off") and one chip, "Outputs: 2 of 3", that counts how many of the three outputs (LED strip, on-screen indicator, board LEDs) are on.
+- Where: right side of the page header (red rectangle, picture 1).
 - How: read only. The dot is the same indicator shown in the Control bar.
 
 ### Summary
 
 ![Summary](https://raw.githubusercontent.com/jhonf441/WorkshopLights/main/img/01-summary-live-outputs.png)
 
-Picture 1: the Summary entry: "What the machine is doing" and "The three outputs, live".
+Picture 1: the Summary entry (red rectangle on the menu): "What the machine is doing" and "The three outputs, live". Below them the same entry shows "Active states", the "Work light" switch with the scene buttons, "Strip consumption" and "Last state changes".
 
 #### What the machine is doing
-- What: the most important state right now with its color and effect (what the on-screen indicator shows), the mode (Laser) and the machine state (At rest), and a folded "How it works".
-- Where: first card of Summary (picture 1).
-- How: read it; press "How it works" to unfold the explanation.
+- What: the most important state right now with its color and effect (what the on-screen indicator shows), the mode (Laser) and the machine state (At rest). The help for the whole entry is the "What it is and how to use it" link at the bottom.
+- Where: first block of Summary (picture 1).
+- How: read it; press the link at the bottom of the entry to unfold the explanation.
 
 #### The three outputs, live
 - What: a live copy of each output: the LED strip (copy of the strip connected to the board), the on-screen indicator (also at the top of this page and in the side bar of the workshop), and the board LEDs (STATUS, VIN, 12 V, 5 V, 3.3 V; off until you enable them in Outputs).
-- Where: second card of Summary (picture 1).
+- Where: second block of Summary (picture 1).
 - How: read only; hover the board LEDs to see each one.
 
 ### Outputs
@@ -76,7 +76,7 @@ Picture 2: "LED strip": the switch, the three number fields and the live strip v
 - How: press the link to open Advanced.
 
 #### Strip view and tests
-- What: a live copy of the strip with its two zones (Status: LEDs 0-19 and Lighting: LEDs 20-36), the total and whether it equals `config.g`; below it two tests ("How many LEDs does it have?" and "Which zone is which?") that light the strip to check it; and the switch for the board LEDs.
+- What: a live copy of the strip with its two zones (Status: LEDs 0-19 and Lighting: LEDs 20-36), the total and whether it is "same as config.g"; below it, under "Check on the strip", two tests ("How many LEDs does it have?" with "Light up", and "Which zone is which?" with "Identify zones") that light the strip to check it; and, further down, the switch "Show the board LEDs".
 - Where: lower part of Outputs (picture 2 shows the strip view; scroll the page for the tests).
 - How: 1. Scroll down. 2. Press a test and look at the strip.
 - Watch out: the tests change the real lights.
@@ -99,20 +99,20 @@ Picture 3: "Work light" and "Scenes" (red rectangles). This entry exists only if
 - How: press the color card and choose the color and the brightness.
 
 #### Scenes
-- What: a scene is a named color and brightness (Work, Photo, Inspection, Dim...). One tap applies it and the light stays like that, on. Up to 8 scenes; "+ Scene" adds one, the cross deletes one, each has a name field.
-- Where: card "Scenes" under the work light (red rectangle, picture 3).
-- How: 1. Press "+ Scene" to add one and type a name. 2. Choose its color and brightness. 3. Tap a scene to apply it.
+- What: a scene is a named color and brightness (Work, Photo, Inspection, Dim...). The "Use" button applies it and the light stays like that, on. Up to 8 scenes; "+ Scene" adds one, the cross deletes one, each has a name field and a color card.
+- Where: block "Scenes" under the work light (red rectangle, picture 3).
+- How: 1. Press "+ Scene" to add one and type a name. 2. Choose its color and brightness in its color card. 3. Press "Use" to apply it.
 - Watch out: deleting a scene is immediate; applying one changes the real light.
 
 ### States
 
 ![States](https://raw.githubusercontent.com/jhonf441/WorkshopLights/main/img/04-states-layout-and-effects.png)
 
-Picture 4: States, top part: the switch, the three layouts, the demo and the effects menu (red rectangles).
+Picture 4: States, top part: the switch, the three layouts, the demo button and the effects menu (red rectangles).
 
 #### Automatic status lights
 - What: when on, the strip shows the state of the machine in its status zone. When off, the lighting also uses the status LEDs (as in the picture).
-- Where: States > top switch (red rectangle, picture 4).
+- Where: States > top switch "Automatic status lights" (red rectangle, picture 4).
 - How: press the switch.
 - Watch out: the Control bar button "Status ON / OFF" does the same.
 
@@ -123,7 +123,7 @@ Picture 4: States, top part: the switch, the three layouts, the demo and the eff
 
 #### See the example on the strip
 - What: a 6 s demo with two enabled states and what you have on screen; it is not saved.
-- Where: button under the layouts (red rectangle, picture 4).
+- Where: button "See the example on the strip (6 s)" under the layouts (red rectangle, picture 4).
 - How: press it and look at the strip.
 
 #### Light effects during a job
@@ -149,14 +149,14 @@ Picture 5: "Machine states": one card per state with Test, a switch, color, effe
 Picture 6: ready-made styles, color of each mode and idle brightness (red rectangles).
 
 #### Ready-made styles
-- What: Classic, Soft, High contrast, Night, Warm, Neon and Color-blind safe change the colors of the modes and of the main states and the idle brightness; "Factory colors" restores the originals; "A different pattern per state" hands out different effects (slow blink, double flash, pulse...) among the active states to tell them apart without color.
-- Where: card "Ready-made styles" (red rectangle, picture 6).
+- What: Classic, Soft, High contrast, Night, Warm, Neon and Color-blind safe change the colors of the modes and of the main states and the idle brightness; "Factory colors" restores the originals; "A different pattern per state" hands out different effects (slow blink, double flash, pulse...) among the active states to tell them apart without color. The color of each single state is chosen on its card in States.
+- Where: block "Ready-made styles" (red rectangle, picture 6).
 - How: 1. Press a style. 2. Adjust colors one by one if you want.
 - Watch out: it changes the colors saved for every mode and state.
 
 #### Color of each mode
 - What: the color of Laser, CNC and 3D printing, seen when idle and as a progress bar during a job.
-- Where: card "Color of each mode" (red rectangle, picture 6).
+- Where: block "Color of each mode" (red rectangle, picture 6).
 - How: press a mode card and pick the color.
 
 #### Idle brightness
@@ -172,24 +172,24 @@ Picture 7: "Animation at power-on" and "When a job ends" (red rectangles).
 
 #### Animation at power-on
 - What: when the board starts, an animation fills the strip once and then each zone takes its color. Choose the type ("Bar that fills the strip"), the color and the speed (Smooth to Fast).
-- Where: first card (picture 7); the switch "Show animation" and the button "Show now".
+- Where: first block (picture 7); the switch "Show animation" and the button "Show now".
 - How: 1. Turn "Show animation" on or off. 2. Pick type, color and speed. 3. Press "Show now" to play it without saving.
 
 #### Blink when a job finishes
 - What: the status zone blinks for a few seconds when a file job or a live job ends, so you notice even if you are not looking at the screen. Choose the warning color and how many times (here 3).
-- Where: card "When a job ends" (picture 7); button "Test the warning on the strip".
+- Where: block "When a job ends" (picture 7); button "Test the warning on the strip".
 - How: 1. Turn "Blink when a job finishes" on. 2. Choose color and times. 3. Press the test button if you want to see it.
 - Watch out: a live job is detected when it is closed. The tests light the real strip.
 
 #### While in use
 - What: blink while paused; the other effects are set per state in the States entry.
-- Where: card under "When a job ends" (scroll down).
+- Where: block "While in use", under "When a job ends" (scroll down).
 
 ### Advanced
 
 ![Advanced](https://raw.githubusercontent.com/jhonf441/WorkshopLights/main/img/08-advanced-zones-and-status-zone.png)
 
-Picture 8: "Zone order and additional strips" (red rectangles: Status zone menu, the zones, "+ Zone").
+Picture 8: "Zone order and additional strips" (red rectangles: "Status zone" menu, the two zones, "+ Zone").
 
 #### Status zone selector
 - What: chooses on which zone of which strip the state is painted (here "Main strip (E0): Status zone").
@@ -198,26 +198,26 @@ Picture 8: "Zone order and additional strips" (red rectangles: Status zone menu,
 
 #### Zone order, number of LEDs and extra strips
 - What: the zones in the order of the strip from the Duet connector (Status: 20 LEDs 0-19, Lighting: 17 LEDs 20-36); arrows move a zone; each zone has its number of LEDs; "+ Zone" adds a zone and the "+" tab next to "Main - E0" adds another strip. Every extra zone has its own color and switch.
-- Where: card "Zone order and additional strips" (picture 8).
+- Where: block "Zone order and additional strips" (picture 8).
 - How: 1. Move each zone with the arrows until it matches how your strip is connected. 2. Set the number of LEDs. 3. Press "+ Zone" if you need another.
 - Watch out: if you do not want work light on the strip set 0 lighting LEDs in Outputs. A wrong order paints the wrong LEDs.
 
 ![Strip on the Pi](https://raw.githubusercontent.com/jhonf441/WorkshopLights/main/img/09-advanced-strip-on-the-pi.png)
 
-Picture 9: "Strip on the Pi": the list of the pins of the Pi.
+Picture 9: "Strip on the Pi": why the Pi cannot drive a strip yet, how to enable it and the list of pins.
 
 #### Strip on the Pi
-- What: lists the GPIO pins of the Pi and says which can drive a strip: it needs the data pin (MOSI) of an SPI bus that is on and free. Here none can, and the page explains that a line such as `dtoverlay=spi1-1cs` in `/boot/firmware/config.txt` and a restart are needed.
+- What: says whether the Pi can drive a strip: it needs the data pin (MOSI) of an SPI bus that is on and free. Here it cannot ("The Pi can drive a strip: not right now"), and under "How to enable it" the page gives three steps: open a terminal on the Pi, paste the command that adds a line such as `dtoverlay=spi1-1cs` to `/boot/firmware/config.txt` (it backs the file up first and restarts the Pi; "Copy command" copies it), and press "Check again" when the Pi has started. "See the pins" lists every GPIO pin in groups ("Free, but no SPI" and "Used by the system"), and the switch "Use a pin of the Pi (instead of the Duet board)" stays off until a valid pin exists.
 - Where: Advanced, below the zones (picture 9).
-- How: read it. The page does not change the system: that is a change you make.
+- How: read it. The page does not change the system: that is a change you make, and it restarts the Pi, so do not do it with a job running.
 
 ![Board signals](https://raw.githubusercontent.com/jhonf441/WorkshopLights/main/img/10-advanced-board-signals-panel.png)
 
 Picture 10: "Board signals panel (screens only)" (red rectangles: the switch and the type ticks).
 
 #### Board signals panel
-- What: a live panel for the screens (not for the strip) with the board LEDs, end stops, probes and BLTouch, fans, heaters, laser and spindle and M42 outputs. "Show the signals panel" turns it on; the ticks choose what it shows; "Only what is active" filters; two buttons switch list and grid view.
-- Where: Advanced > card "Board signals panel" (picture 10).
+- What: a live panel for the screens (not for the strip) with the board LEDs, end stops, probes and BLTouch, fans, heaters, laser and spindle and M42 outputs. "Show the signals panel" turns it on; the ticks choose what it shows; the "Live" chip counts the active signals ("7 of 16 active"); "Only what is active" filters; two buttons switch list and grid view. Each signal says Active or Inactive in words, not only by color.
+- Where: Advanced > block "Board signals panel (screens only)" (picture 10).
 - How: turn the switch on and tick the groups you want.
 - Watch out: it only reads.
 

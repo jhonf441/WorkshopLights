@@ -11,6 +11,7 @@
 //   IMPORT_OPS   import a profile                                    lights.import
 //   PI_OPS       the pins of the Pi and the test of one pin          lights.pi_pins, lights.pi_test
 //   M950_OPS     apply the M950 line (administrator only)            lights.apply_m950
+//   LED_ADD_OPS  add a strip to the configuration (technician)       machine.led.preview, machine.config.plan, machine.config.apply
 //   SCREEN_OPS   everything the page asks when it opens, in one call
 
 export const USE_OPS = Object.freeze(['light.set', 'lights.scene'])
@@ -21,11 +22,12 @@ export const TEST_OPS = Object.freeze(['lights.test_state', 'statuslight.set'])
 export const IMPORT_OPS = Object.freeze(['lights.import'])
 export const PI_OPS = Object.freeze(['lights.pi_pins', 'lights.pi_test'])
 export const M950_OPS = Object.freeze(['lights.apply_m950'])
+export const LED_ADD_OPS = Object.freeze(['machine.led.preview', 'machine.config.plan', 'machine.config.apply'])
 
 // the groups that carry a sentence, by name: the structure test walks this list
-export const GROUPS = Object.freeze({ use: USE_OPS, status: STATUS_OPS, zone: ZONE_OPS, save: SAVE_OPS, test: TEST_OPS, import: IMPORT_OPS, pi: PI_OPS, m950: M950_OPS })
+export const GROUPS = Object.freeze({ use: USE_OPS, status: STATUS_OPS, zone: ZONE_OPS, save: SAVE_OPS, test: TEST_OPS, import: IMPORT_OPS, pi: PI_OPS, m950: M950_OPS, ledAdd: LED_ADD_OPS })
 
-export const SCREEN_OPS = Object.freeze(Array.from(new Set([].concat(USE_OPS, STATUS_OPS, ZONE_OPS, SAVE_OPS, TEST_OPS, IMPORT_OPS, PI_OPS, M950_OPS))))
+export const SCREEN_OPS = Object.freeze(Array.from(new Set([].concat(USE_OPS, STATUS_OPS, ZONE_OPS, SAVE_OPS, TEST_OPS, IMPORT_OPS, PI_OPS, M950_OPS, LED_ADD_OPS))))
 
 // the target of one scene (workshop:<plugin>:<type>/<id>): a rule may deny one scene and allow the others
 export function sceneTarget(scene) {

@@ -1,105 +1,116 @@
 <template>
 	<div>
-		<help-guide class="mb-3"><p class="mb-0">{{ t.intro }}</p></help-guide>
-
 		<!-- ===== Strip order and zones ===== -->
-		<v-card v-if="lights.stripPresent" class="mb-3">
-			<v-card-text>
-				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-swap-horizontal</v-icon>{{ t.orderTitle }}</div>
-					<help-tip :title=" t.orderTitle ">{{ t.orderWhat }}</help-tip></div>
-				<strip-zones part="order" />
-			</v-card-text>
-		</v-card>
+		<div v-if="lights.stripPresent" class="wf-group">
+			<div class="help-tip-row mb-1"><h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-swap-horizontal</v-icon>{{ t.orderTitle }}</h4>
+				</div>
+				<help-line class="mb-2" :text="t.orderWhat" />
+			<strip-zones part="order" />
+		</div>
 
 		<!-- ===== Strip on the Pi: enable it and choose the pin of each strip ===== -->
-		<v-card v-if="lights.stripPresent" class="mb-3">
-			<v-card-text>
-				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-raspberry-pi</v-icon>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_section_title') }}</div>
-					<help-tip :title="$t('plugins.WorkshopLights.tabAdvanced.pi_section_title')">{{ $t('plugins.WorkshopLights.tabAdvanced.pi_section_what') }}</help-tip></div>
-				<pi-outputs />
-			</v-card-text>
-		</v-card>
+		<div v-if="lights.stripPresent" class="wf-group">
+			<div class="help-tip-row mb-1"><h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-raspberry-pi</v-icon>{{ $t('plugins.WorkshopLights.tabAdvanced.pi_section_title') }}</h4>
+				</div>
+				<help-line class="mb-2" :text="$t('plugins.WorkshopLights.tabAdvanced.pi_section_what')" />
+			<pi-outputs />
+		</div>
 
 		<!-- ===== Board signals panel (screens only) ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.panelTitle }}</div>
-					<help-tip :title="t.panelTitle"><p>{{ t.panelWhat }}</p><p class="mb-0">{{ t.panelLimits }}</p></help-tip></div>
-				<v-switch v-model="form.strip_state.active" :label="t.panelSwitch" dense hide-details class="mt-0" />
-				<template v-if="form.strip_state.active">
-					<div class="group-title mt-3">{{ t.panelShows }}</div>
-					<div class="d-flex flex-wrap" style="gap:4px 20px">
-						<v-checkbox v-for="g in groups" :key="g.id" v-model="form.strip_state.groups" :value="g.id" :label="g.name" dense hide-details class="mt-0" />
+		<div class="wf-group">
+			<div class="help-tip-row mb-1"><h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.panelTitle }}</h4>
+				</div>
+				<help-line class="mb-2" :text="t.panelWhat + ' ' + t.panelLimits" />
+			<v-switch v-model="form.strip_state.active" :label="t.panelSwitch" dense hide-details class="mt-0" />
+			<template v-if="form.strip_state.active">
+				<div class="group-title mt-3">{{ t.panelShows }}</div>
+				<div class="d-flex flex-wrap" style="gap:4px 20px">
+					<v-checkbox v-for="g in groups" :key="g.id" v-model="form.strip_state.groups" :value="g.id" :label="g.name" dense hide-details class="mt-0" />
+				</div>
+				<div class="d-flex flex-wrap align-center mt-3" style="gap:8px 16px">
+					<div class="group-title mb-0">{{ t.panelLive }}</div>
+					<v-chip
+						small label :color="faults ? 'error' : 'success'" dark :outlined="faults > 0 && !onlyFaults" class="panel-live"
+						:title="faults ? (onlyFaults ? $t('plugins.WorkshopLights.tabAdvanced.panel_show_all') : $t('plugins.WorkshopLights.tabAdvanced.panel_show_faults')) : ''"
+						:aria-pressed="faults ? String(onlyFaults) : null" :ripple="faults > 0" @click="faults ? (onlyFaults = !onlyFaults) : null"
+					>
+						<v-icon small left>{{ faults ? 'mdi-alert-circle' : 'mdi-check-circle' }}</v-icon>
+						{{ faults ? $t('plugins.WorkshopLights.tabAdvanced.panel_faults', { n: faults }) : $t('plugins.WorkshopLights.tabAdvanced.panel_summary', { n: activeCount, m: secs.length }) }}
+						<span v-if="faults" class="ml-1">({{ onlyFaults ? $t('plugins.WorkshopLights.tabAdvanced.panel_show_all') : $t('plugins.WorkshopLights.tabAdvanced.panel_show_faults') }})</span>
+					</v-chip>
+					<v-spacer />
+					<v-checkbox v-model="onlyActive" :label="$t('plugins.WorkshopLights.tabAdvanced.panel_only_active')" dense hide-details class="mt-0 pt-0" />
+					<v-btn-toggle v-model="view" mandatory dense>
+						<v-btn small value="list" :title="$t('plugins.WorkshopLights.tabAdvanced.panel_view_list')"><v-icon small>mdi-format-list-bulleted</v-icon></v-btn>
+						<v-btn small value="dots" :title="$t('plugins.WorkshopLights.tabAdvanced.panel_view_dots')"><v-icon small>mdi-dots-grid</v-icon></v-btn>
+					</v-btn-toggle>
+				</div>
+				<div v-if="!secs.length" class="text-body-2 text-faint mt-2">{{ t.panelNoData }}</div>
+				<div v-else-if="view === 'dots'" class="mt-2">
+					<div class="te-strip" @touchstart.passive="touch" @touchmove.passive="touch">
+						<template v-for="(g, gi) in groupedDots">
+							<span v-if="gi > 0" :key="'sep' + g.id" class="te-sep" />
+							<span
+								v-for="x in g.secs" :key="x.id" class="te-led" :data-te="x.id"
+								:class="[{ 'te-sel': sel === x.id, 'te-led-fault': isFault(x) }, x.blink > 0 && x.level > 0 ? 'lx-blink' : '']"
+								:style="ledStyle(x)" :title="x.label" @mouseenter="sel = x.id" @click="sel = x.id"
+							/>
+						</template>
 					</div>
-					<div class="d-flex flex-wrap align-center mt-3" style="gap:8px 16px">
-						<div class="group-title mb-0">{{ t.panelLive }}</div>
-						<v-chip x-small label :color="faults ? 'error' : 'success'" dark>
-							{{ faults ? $t('plugins.WorkshopLights.tabAdvanced.panel_faults', { n: faults }) : $t('plugins.WorkshopLights.tabAdvanced.panel_summary', { n: activeCount, m: secs.length }) }}
-						</v-chip>
-						<v-spacer />
-						<v-checkbox v-model="onlyActive" :label="$t('plugins.WorkshopLights.tabAdvanced.panel_only_active')" dense hide-details class="mt-0 pt-0" />
-						<v-btn-toggle v-model="view" mandatory dense>
-							<v-btn small value="list" :title="$t('plugins.WorkshopLights.tabAdvanced.panel_view_list')"><v-icon small>mdi-format-list-bulleted</v-icon></v-btn>
-							<v-btn small value="dots" :title="$t('plugins.WorkshopLights.tabAdvanced.panel_view_dots')"><v-icon small>mdi-dots-grid</v-icon></v-btn>
-						</v-btn-toggle>
-					</div>
-					<div v-if="!secs.length" class="text-body-2 text-faint mt-2">{{ t.panelNoData }}</div>
-					<div v-else-if="view === 'dots'" class="mt-2">
-						<div class="te-strip" @touchstart.passive="touch" @touchmove.passive="touch">
-							<template v-for="(g, gi) in groupedDots">
-								<span v-if="gi > 0" :key="'sep' + g.id" class="te-sep" />
-								<span
-									v-for="x in g.secs" :key="x.id" class="te-led" :data-te="x.id"
-									:class="[{ 'te-sel': sel === x.id }, x.blink > 0 && x.level > 0 ? 'lx-blink' : '']"
-									:style="ledStyle(x)" :title="x.label" @mouseenter="sel = x.id" @click="sel = x.id"
-								/>
-							</template>
-						</div>
-						<div v-if="!groupedDots.length" class="text-body-2 text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.panel_nothing_active') }}</div>
-						<div class="text-body-2 mt-2 te-label">{{ label || t.panelHint }}</div>
-					</div>
-					<div v-else class="mt-2">
-						<div v-for="g in groupedShown" :key="g.id" class="te-grupo mb-2">
+					<div v-if="!groupedDots.length" class="text-body-2 text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.panel_nothing_active') }}</div>
+					<div class="text-body-2 mt-2 te-label">{{ label || t.panelHint }}</div>
+				</div>
+				<div v-else class="mt-2">
+						<div v-for="g in groupedShown" :key="g.id" class="te-grupo mb-3">
 							<div class="te-group-cab">
-								<span class="font-weight-medium">{{ t.groups[g.id] || g.id }}</span>
-								<span class="text-faint ml-2">{{ $t('plugins.WorkshopLights.tabAdvanced.panel_summary', { n: g.active, m: g.secs.length }) }}</span>
+								<v-icon small class="mr-2">{{ groupIcon(g.id) }}</v-icon>
+								<span class="te-group-name">{{ t.groups[g.id] || g.id }}</span>
+								<span class="te-count">{{ $t('plugins.WorkshopLights.tabAdvanced.panel_summary', { n: g.active, m: g.secs.length }) }}</span>
 							</div>
 							<div class="te-list">
-								<div v-for="x in g.secs" :key="x.id" class="te-item" :class="{ 'te-shutdown': !isActive(x), 'te-fault': isFault(x) }">
+								<div v-for="x in g.secs" :key="x.id" class="te-item" :class="['is-' + stateOf(x)]" :title="x.label">
 									<span class="te-point" :class="x.blink > 0 && x.level > 0 ? 'lx-blink' : ''" :style="ledStyle(x)" />
-									<span class="te-text">{{ x.label }}</span>
+									<v-icon small class="te-cat">{{ groupIcon(x.group) }}</v-icon>
+									<span class="te-text">
+										<span class="te-name-row">
+											<span class="te-name">{{ parts(x).name }}</span>
+											<span v-if="parts(x).board" class="te-board">{{ parts(x).board }}</span>
+										</span>
+										<span class="te-detail">{{ parts(x).detail || '\u00a0' }}</span>
+									</span>
+									<span class="te-state"><v-icon small>{{ stateIcon(x) }}</v-icon>{{ stateText(x) }}</span>
 								</div>
 							</div>
 						</div>
-						<div v-if="!groupedShown.length" class="text-body-2 text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.panel_nothing_active') }}</div>
-					</div>
-					<div v-if="read && !read.ok" class="text-caption warning--text mt-1">{{ t.panelNoRead }}</div>
-				</template>
-			</v-card-text>
-		</v-card>
+					<div v-if="!groupedShown.length" class="text-body-2 text-faint">{{ $t('plugins.WorkshopLights.tabAdvanced.panel_nothing_active') }}</div>
+				</div>
+				<div v-if="read && !read.ok" class="text-caption warning--text mt-1">{{ t.panelNoRead }}</div>
+			</template>
+		</div>
 
 		<!-- ===== Fallback ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="help-tip-row mb-1"><div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-shield-check-outline</v-icon>{{ t.fallbackTitle }}</div>
-					<help-tip :title="t.fallbackTitle">{{ t.stopping }}</help-tip></div>
-				<div class="text-body-2 text-faint">{{ lights.stripPresent ? t.fallbackStrip : t.fallbackNoStrip }}</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<div class="help-tip-row mb-1"><h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-shield-check-outline</v-icon>{{ t.fallbackTitle }}</h4>
+				</div>
+				<help-line class="mb-2" :text="t.stopping" />
+			<div class="text-body-2 text-faint">{{ lights.stripPresent ? t.fallbackStrip : t.fallbackNoStrip }}</div>
+		</div>
 
 		<!-- ===== Profile ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-file-export-outline</v-icon>{{ t.profileTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.profileWhat }}</div>
-				<div class="d-flex flex-wrap align-center" style="gap:12px">
-					<v-btn small outlined @click="lights.exportProfile()"><v-icon small left>mdi-download</v-icon>{{ t.export }}</v-btn>
-					<v-btn small outlined :disabled="!importAllowed" @click="lights.importProfile(withHardware)"><v-icon small left>mdi-upload</v-icon>{{ t.import }}</v-btn>
-					<div class="help-tip-row"><v-checkbox v-model="withHardware" dense class="mt-0 pt-0" hide-details :label="t.withHardware" /><help-tip :title="t.withHardware">{{ t.withHardwareHelp }}</help-tip></div>
-				</div>
-				<lock-reason :ops="importOps" min="technician" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.import_lights')" />
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-file-export-outline</v-icon>{{ t.profileTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.profileWhat }}</div>
+			<div class="d-flex flex-wrap align-center" style="gap:12px">
+				<v-btn small outlined @click="lights.exportProfile()"><v-icon small left>mdi-download</v-icon>{{ t.export }}</v-btn>
+				<v-btn small outlined :disabled="!importAllowed" @click="lights.importProfile(withHardware)"><v-icon small left>mdi-upload</v-icon>{{ t.import }}</v-btn>
+				<div class="help-tip-row"><v-checkbox v-model="withHardware" dense class="mt-0 pt-0" hide-details :label="t.withHardware" /></div>
+			</div>
+				<help-line class="mt-2" :text="t.withHardwareHelp" />
+			<lock-reason :ops="importOps" min="technician" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.import_lights')" />
+		</div>
+
+		<!-- one help for the section, at its foot (FAMILIA-REDISENO 3, C4): it used to open the tab -->
+		<help-guide class="mt-3"><p class="mb-0">{{ t.intro }}</p></help-guide>
 	</div>
 </template>
 
@@ -110,11 +121,12 @@ import i18n from '../../i18n'
 
 import StripZones from './StripZones.vue'
 import PiOutputs from './PiOutputs.vue'
-import HelpTip from './HelpTip.vue' // vue/_shared36
+import HelpLine from './HelpLine.vue' // vue/_shared36
 import LockReason from './LockReason.vue' // vue/_shared36
 import { IMPORT_OPS, groupAllowed } from './access-groups.js'
 import { api } from './workshop-api.js'
 import HelpGuide from './HelpGuide.vue' // vue/_shared36
+import { groupIcon, isFault, isActive, signalState, splitLabel, faultsFirst, STATE_ICONS } from './panel-signals.js'
 
 // Every user-visible text of this component is here.
 const VIEW_KEY = 'workshopLightsPanelView'
@@ -146,10 +158,10 @@ const T = {
 };
 
 export default {
-	components: { HelpGuide, StripZones, PiOutputs, HelpTip, LockReason },
+	components: { HelpLine, HelpGuide, StripZones, PiOutputs, LockReason },
 	inject: ['lights'],
 	data() {
-		return { t: T, sel: null, withHardware: false, onlyActive: false, view: this.readView(), importOps: IMPORT_OPS };
+		return { t: T, sel: null, withHardware: false, onlyActive: false, onlyFaults: false, view: this.readView(), importOps: IMPORT_OPS };
 	},
 	computed: {
 		// import a profile: the answer of the service (the table of the role until it answers)
@@ -190,15 +202,16 @@ export default {
 		faults() {
 			return this.secs.filter(x => this.isFault(x)).length;
 		},
+		// groups with their count (of ALL their signals) and the signals to draw: faults first; "only faults" / "only what is active" filter
 		groupedShown() {
 			return this.grouped
-				.map(g => ({ id: g.id, active: g.secs.filter(x => this.isActive(x)).length, secs: this.onlyActive ? g.secs.filter(x => this.isActive(x)) : g.secs }))
+				.map(g => ({ id: g.id, active: g.secs.filter(x => this.isActive(x)).length, secs: faultsFirst(this.visible(g.secs)) }))
 				.filter(g => g.secs.length);
 		},
 		// dots view with "only active": a group with nothing on is not drawn at all (the service already
 		// leaves out what is not configured for the mode in use, e.g. heaters without a sensor in Laser / CNC)
 		groupedDots() {
-			return this.onlyActive ? this.grouped.filter(g => g.secs.some(x => this.isActive(x))) : this.grouped;
+			return this.grouped.filter(g => this.visible(g.secs).length).map(g => ({ id: g.id, secs: this.visible(g.secs) }));
 		},
 		label() {
 			const x = this.secs.find(y => y.id === this.sel);
@@ -236,12 +249,23 @@ export default {
 				return 'list';
 			}
 		},
-		isActive(x) {
-			return x.level > 0.3;
+		isActive,
+		isFault,
+		groupIcon,
+		stateOf: signalState,
+		parts: splitLabel,
+		stateIcon(x) {
+			return STATE_ICONS[signalState(x)];
 		},
-		// the service marks a real problem (a heater fault, a board that stopped answering); a red colour alone is not one (the board LEDs are red)
-		isFault(x) {
-			return x.fault === true || /FALLA|FAULT|no contesta|not answering/i.test(x.label || '');
+		stateText(x) {
+			return this.$t('plugins.WorkshopLights.tabAdvanced.panel_state_' + signalState(x));
+		},
+		// "only faults" wins over "only what is active"
+		visible(list) {
+			if (this.onlyFaults) {
+				return list.filter(x => isFault(x));
+			}
+			return this.onlyActive ? list.filter(x => isActive(x)) : list;
 		},
 		ledStyle(x) {
 			const on = x.level > 0;
@@ -313,40 +337,112 @@ export default {
 	background: rgba(255, 255, 255, 0.3);
 }
 .te-group-cab {
-	font-size: 13px;
-	margin-bottom: 4px;
+	display: flex;
+	align-items: center;
+	font-size: 14px;
+	margin-bottom: 6px;
+	padding-bottom: 4px;
+	border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+.te-group-name {
+	font-weight: 600;
+}
+.te-count {
+	margin-left: auto;
+	font-size: 12px;
+	padding: 0 8px;
+	line-height: 20px;
+	border-radius: 10px;
+	border: 1px solid rgba(128, 128, 128, 0.45);
+	background: rgba(128, 128, 128, 0.14);
 }
 .te-list {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-	gap: 4px 12px;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 6px 12px;
 }
 .te-item {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 3px 8px;
-	border-radius: 6px;
-	background: rgba(255, 255, 255, 0.04);
+	min-height: 56px;
+	box-sizing: border-box;
+	padding: 6px 10px;
+	border-radius: 8px;
+	border: 1px solid rgba(128, 128, 128, 0.4);
+	background: rgba(128, 128, 128, 0.1);
 	font-size: 13px;
 	min-width: 0;
 }
-.te-item.te-shutdown {
-	opacity: 0.55;
-}
-.te-item.te-fault {
-	background: rgba(244, 67, 54, 0.18);
-	outline: 1px solid rgba(244, 67, 54, 0.6);
+.te-item.is-fault {
+	border: 2px solid #e53935;
+	background: rgba(244, 67, 54, 0.16);
 }
 .te-point {
 	flex: none;
 	width: 14px;
 	height: 14px;
 	border-radius: 50%;
-	outline: 1px solid rgba(255, 255, 255, 0.2);
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55), 0 0 0 2px rgba(0, 0, 0, 0.45);
+}
+.te-cat {
+	flex: none;
 }
 .te-text {
-	overflow-wrap: anywhere;
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.te-name-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+.te-name {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.te-board {
+	flex: none;
+	max-width: 50%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	line-height: 18px;
+	padding: 0 6px;
+	border-radius: 9px;
+	border: 1px solid rgba(128, 128, 128, 0.5);
+	background: rgba(128, 128, 128, 0.16);
+}
+.te-detail {
+	font-size: 12px;
+	line-height: 16px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--tp-faint);
+}
+.te-state {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	font-weight: 600;
+}
+.te-item.is-fault .te-state {
+	color: #e53935;
+}
+.te-led-fault {
+	outline: 2px solid #e53935 !important;
+}
+.panel-live {
+	min-height: 32px;
 }
 .te-label {
 	min-height: 20px;

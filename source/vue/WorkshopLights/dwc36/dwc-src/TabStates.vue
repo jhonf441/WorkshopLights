@@ -1,129 +1,145 @@
 <template>
 	<div>
-		<help-guide class="mb-3"><p class="mb-0">{{ t.intro }}</p></help-guide>
-		<div class="help-tip-row"><v-switch :input-value="lights.statusAuto" dense class="mt-0 mb-3" :loading="lights.busyState" :disabled="!testAllowed" @change="lights.changeState" hide-details :label="t.autoStatus" /><help-tip :title="t.autoStatus">{{ t.autoStatusHelp }}</help-tip></div>
-		<lock-reason :ops="testOps" min="technician" class="mb-3" :subject="$t('plugins.WorkshopLights.subjects.states_test')" />
-
-		<v-alert v-if="lookAlikes.length" dense outlined type="warning" class="mb-3">
-			{{ t.lookAlike }}
-			<div v-for="par in lookAlikes" :key="par">&bull; {{ par }}</div>
-			<div class="text-caption">{{ t.lookAlikeHelp }}</div>
-		</v-alert>
+		<!-- the automatic status lights and the warning of states that look alike: the first group of the section -->
+		<div class="wf-group">
+			<div class="help-tip-row"><v-switch :input-value="lights.statusAuto" dense class="mt-0 mb-2" :loading="lights.busyState" :disabled="!testAllowed" @change="lights.changeState" hide-details :label="t.autoStatus" /></div>
+			<help-line class="mb-2" :text="t.autoStatusHelp" />
+			<lock-reason :ops="testOps" min="technician" class="mb-2" :subject="$t('plugins.WorkshopLights.subjects.states_test')" />
+			<v-alert v-if="lookAlikes.length" dense outlined type="warning" class="mb-0">
+				{{ t.lookAlike }}
+				<div v-for="par in lookAlikes" :key="par">&bull; {{ par }}</div>
+				<div class="text-caption">{{ t.lookAlikeHelp }}</div>
+			</v-alert>
+		</div>
 
 		<!-- ===== Several at once (strip) ===== -->
-		<v-card v-if="lights.stripPresent" class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-layers-outline</v-icon>{{ t.combineTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ combineHelp }} ({{ activeNames }}).</div>
-				<div class="combine">
-					<button v-for="m in combineModes" :key="m.id" type="button" class="combine-op" :class="{ active: form.combine.mode === m.id }" :disabled="!!applyingMode" @click="chooseCombine(m.id)">
-						<led-strip :secs="secsMode(m.id)" />
-						<v-progress-linear v-if="applyingMode === m.id" indeterminate height="2" class="mt-1" />
-						<div class="text-body-2 font-weight-medium mt-1">{{ m.name }}</div>
-						<div class="text-caption text-faint">{{ m.desc }}</div>
-					</button>
-				</div>
-				<div v-if="form.combine.mode === 'turns'" class="d-flex align-center mt-2" style="max-width:420px">
-					<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.turnEach }} {{ form.combine.turn_s }} s</span>
-					<v-slider v-model="form.combine.turn_s" min="0.5" max="5" step="0.5" hide-details dense @change="chooseCombine('turns')" />
-				</div>
-				<!-- zone capacity: how many states fit at once and what to do when they do not -->
-				<div v-if="capacity && capacity.leds" class="mt-3">
-					<div class="text-body-2">{{ $t('plugins.WorkshopLights.tabStates.zone_capacity', { n: capacity.leds, k: capacity.fits, b: capacity.board_leds }) }}</div>
-					<v-select
-						v-if="form.combine.mode === 'split'" v-model="form.combine.si_no_fit" :items="noFitItems" :label="$t('plugins.WorkshopLights.tabStates.when_they_do_not_fit')"
-						dense outlined hide-details class="mt-2" style="max-width:460px" :disabled="!!applyingMode" @change="chooseCombine('split')"
-					/>
-					<v-alert v-if="capacity.rotating" dense outlined type="info" class="mt-2 mb-0">{{ $t('plugins.WorkshopLights.tabStates.now_rotating', { n: capacity.activeList, k: capacity.fits }) }}</v-alert>
-					<v-alert v-else-if="capacity.hidden && capacity.hidden.length" dense outlined type="warning" class="mt-2 mb-0">
-						{{ $t('plugins.WorkshopLights.tabStates.now_hidden', { names: capacity.hidden.join(', ') }) }}
-					</v-alert>
-				</div>
-				<div class="d-flex align-center flex-wrap mt-2" style="gap:8px">
-					<v-btn small outlined :loading="lights.testing === 'combine'" @click="tryCombine()"><v-icon small left>mdi-play</v-icon>{{ t.tryExample }}</v-btn>
-					<span class="text-caption text-faint">{{ t.tryExampleHelp }}</span>
-				</div>
-				<div class="text-caption text-faint mt-1">{{ t.emergencyAlways }}</div>
-				<!-- during a job the strip keeps its colours but not its blinks (each blink phase is a command for the Duet) -->
-				<wf-field id="lf-job-effects" :label="$t('plugins.WorkshopLights.tabStates.job_effects')" class="mt-3" style="max-width:520px">
-					<template v-if="!lights.piPaints" #help><help-tip :title="$t('plugins.WorkshopLights.tabStates.job_effects')">{{ $t('plugins.WorkshopLights.tabStates.job_effects_help' + (hasJog ? '' : '_no_jog')) }}</help-tip></template>
-					<v-select
-						id="lf-job-effects" :value="lights.piPaints ? 'with_effects' : form.effects_in_job" :items="jobEffectsItems" :disabled="lights.piPaints"
-						:aria-label="$t('plugins.WorkshopLights.tabStates.job_effects')" dense outlined hide-details @change="form.effects_in_job = $event"
-					/>
-				</wf-field>
-			</v-card-text>
-		</v-card>
+		<div v-if="lights.stripPresent" class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-layers-outline</v-icon>{{ t.combineTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ combineHelp }} ({{ activeNames }}).</div>
+			<div class="combine">
+				<button v-for="m in combineModes" :key="m.id" type="button" class="combine-op" :class="{ active: form.combine.mode === m.id }" :disabled="!!applyingMode" @click="chooseCombine(m.id)">
+					<led-strip :secs="secsMode(m.id)" />
+					<v-progress-linear v-if="applyingMode === m.id" indeterminate height="2" class="mt-1" />
+					<div class="text-body-2 font-weight-medium mt-1">{{ m.name }}</div>
+					<div class="text-caption text-faint">{{ m.desc }}</div>
+				</button>
+			</div>
+			<div v-if="form.combine.mode === 'turns'" class="d-flex align-center mt-2" style="max-width:420px">
+				<span class="text-body-2 mr-3" style="white-space:nowrap">{{ t.turnEach }} {{ form.combine.turn_s }} s</span>
+				<v-slider v-model="form.combine.turn_s" min="0.5" max="5" step="0.5" hide-details dense @change="chooseCombine('turns')" />
+			</div>
+			<!-- zone capacity: how many states fit at once and what to do when they do not -->
+			<div v-if="capacity && capacity.leds" class="mt-3">
+				<div class="text-body-2">{{ $t('plugins.WorkshopLights.tabStates.zone_capacity', { n: capacity.leds, k: capacity.fits, b: capacity.board_leds }) }}</div>
+				<v-select
+					v-if="form.combine.mode === 'split'" v-model="form.combine.si_no_fit" :items="noFitItems" :label="$t('plugins.WorkshopLights.tabStates.when_they_do_not_fit')"
+					dense outlined hide-details class="mt-2" style="max-width:460px" :disabled="!!applyingMode" @change="chooseCombine('split')"
+				/>
+				<v-alert v-if="capacity.rotating" dense outlined type="info" class="mt-2 mb-0">{{ $t('plugins.WorkshopLights.tabStates.now_rotating', { n: capacity.activeList, k: capacity.fits }) }}</v-alert>
+				<v-alert v-else-if="capacity.hidden && capacity.hidden.length" dense outlined type="warning" class="mt-2 mb-0">
+					{{ $t('plugins.WorkshopLights.tabStates.now_hidden', { names: capacity.hidden.join(', ') }) }}
+				</v-alert>
+			</div>
+			<div class="d-flex align-center flex-wrap mt-2" style="gap:8px">
+				<v-btn small outlined :loading="lights.testing === 'combine'" @click="tryCombine()"><v-icon small left>mdi-play</v-icon>{{ t.tryExample }}</v-btn>
+				<span class="text-caption text-faint">{{ t.tryExampleHelp }}</span>
+			</div>
+			<div class="text-caption text-faint mt-1">{{ t.emergencyAlways }}</div>
+			<!-- during a job the strip keeps its colours but not its blinks (each blink phase is a command for the Duet) -->
+			<wf-field id="lf-job-effects" :label="$t('plugins.WorkshopLights.tabStates.job_effects')" class="mt-3" style="max-width:520px">
+				<v-select
+					id="lf-job-effects" :value="lights.piPaints ? 'with_effects' : form.effects_in_job" :items="jobEffectsItems" :disabled="lights.piPaints"
+					:aria-label="$t('plugins.WorkshopLights.tabStates.job_effects')" dense outlined hide-details @change="form.effects_in_job = $event"
+				/>
+			</wf-field>
+			<help-line v-if="!lights.piPaints" class="mt-2" :text="$t('plugins.WorkshopLights.tabStates.job_effects_help' + (hasJog ? '' : '_no_jog'))" />
+		</div>
 
 		<!-- ===== The states ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-traffic-light</v-icon>{{ t.statesTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.statesHelp }}</div>
-				<div class="state-list">
-					<div v-for="e in rows" :key="e.id" class="state-card" :class="{ shutdown: !form.states[e.id].active }" :style="{ '--st': hexOf(e.id) }">
-						<div class="state-head">
-							<div class="state-order">
-								<template v-if="e.kind === 'combinable'">
-									<v-btn x-small icon :disabled="e.pos === 0" :title="t.moveUp" @click="move(e.id, -1)"><v-icon small>mdi-chevron-up</v-icon></v-btn>
-									<v-btn x-small icon :disabled="e.pos === lastPos" :title="t.moveDown" @click="move(e.id, 1)"><v-icon small>mdi-chevron-down</v-icon></v-btn>
-								</template>
-								<v-icon v-else small :title="t.fixed">mdi-pin-outline</v-icon>
-							</div>
-							<span class="state-dot" :class="effectClass(form.states[e.id].effect)" :style="{ background: hexOf(e.id) }" />
-							<div class="state-title">
-								<div class="text-body-1 font-weight-medium">{{ info(e.id).name }}</div>
-								<div class="text-caption text-faint">{{ info(e.id).desc }}</div>
-							</div>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-traffic-light</v-icon>{{ t.statesTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.statesHelp }}</div>
+			<div class="state-list">
+				<div v-for="e in rows" :key="e.id" class="state-card" :class="{ shutdown: !form.states[e.id].active }" :style="{ '--st': hexOf(e.id) }">
+					<div class="state-head">
+						<div class="state-order">
+							<template v-if="e.kind === 'combinable'">
+								<v-btn small icon :disabled="e.pos === 0" :title="t.moveUp" @click="move(e.id, -1)"><v-icon small>mdi-chevron-up</v-icon></v-btn>
+								<v-btn small icon :disabled="e.pos === lastPos" :title="t.moveDown" @click="move(e.id, 1)"><v-icon small>mdi-chevron-down</v-icon></v-btn>
+							</template>
+							<v-icon v-else small :title="t.fixed">mdi-pin-outline</v-icon>
+						</div>
+						<span class="state-dot" :class="effectClass(form.states[e.id].effect)" :style="{ background: hexOf(e.id) }" />
+						<div class="state-title">
+							<div class="state-name text-body-1 font-weight-medium" :title="info(e.id).name">{{ info(e.id).name }}</div>
+							<div class="state-desc text-caption text-faint" :title="info(e.id).desc">{{ info(e.id).desc }}</div>
+						</div>
+						<div class="state-actions">
 							<v-btn x-small outlined :loading="lights.testingState === e.id" :disabled="!testAllowed" :title="t.testHelp" @click="lights.testState(e.id)"><v-icon x-small left>mdi-play</v-icon>{{ t.test }}</v-btn>
 							<v-switch v-model="form.states[e.id].active" :disabled="e.id === 'stop'" dense hide-details class="mt-0 pt-0 flex-grow-0" :title="t.activeHelp" />
 						</div>
-						<div class="state-body">
-							<div v-if="e.id === 'jog_free'" class="state-field state-color" :title="t.jogColorHelp">
-								<span class="state-label">{{ t.colColor }}</span>
-								<span><span class="jog-swatch" :style="{ background: jogColor }" /><span class="text-caption text-faint">{{ t.jogColorFromJog }}</span></span>
-							</div>
-							<div v-else class="state-field state-color">
-								<span class="state-label">{{ t.colColor }}</span>
-								<color-rgbw v-model="form.states[e.id].color" :name="info(e.id).name" />
-							</div>
-							<div class="state-field">
-								<v-select v-model="form.states[e.id].effect" :items="effectsOf(e.id)" :disabled="e.id === 'stop'" dense outlined hide-details :label="t.colEffect" />
-							</div>
-							<div v-if="e.id === 'pi_hot'" class="state-field">
-								<v-text-field v-model.number="form.pi_hot_c" type="number" min="40" max="95" suffix="°C" :label="t.piHotLabel" dense outlined hide-details />
-							</div>
-							<div v-if="e.id === 'live_quiet'" class="state-field">
-								<v-text-field v-model.number="form.live_quiet_s" type="number" min="10" max="3600" :suffix="$t('plugins.WorkshopLights.tabStates.s')" :label="t.liveQuietLabel" dense outlined hide-details />
-							</div>
-							<div class="state-field state-outputs">
-								<span class="state-label">{{ t.colOutputs }}</span>
-								<span class="state-checks">
-									<v-checkbox v-model="form.states[e.id].outputs.strip" :disabled="!lights.stripPresent || e.id === 'stop'" :label="t.outStrip" dense hide-details class="mt-0 pt-0" :title="lights.stripPresent ? t.stripHelp : t.noStripHelp" />
-									<v-checkbox v-model="form.states[e.id].outputs.screen" :disabled="e.id === 'stop'" :label="t.outScreen" dense hide-details class="mt-0 pt-0" :title="t.screenHelp" />
-									<v-checkbox v-model="form.states[e.id].outputs.board" :label="t.outBoard" dense hide-details class="mt-0 pt-0" :title="t.boardHelp" />
-								</span>
-							</div>
+					</div>
+					<!-- same skeleton in every card: row 1 colour + effect (label above, 44 px), row 2 outputs, row 3 notes and extra fields -->
+					<div class="state-body">
+						<div v-if="e.id === 'jog_free'" class="state-field state-color" :title="t.jogColorHelp">
+							<span class="state-label">{{ t.colColor }}</span>
+							<span class="jog-chip"><span class="jog-swatch" :style="{ background: jogColor }" /><span class="text-body-2">{{ t.jogColorFromJog }}</span></span>
+						</div>
+						<div v-else class="state-field state-color">
+							<span class="state-label">{{ t.colColor }}</span>
+							<color-rgbw v-model="form.states[e.id].color" :name="info(e.id).name" compact />
+						</div>
+						<div class="state-field state-effect">
+							<label class="state-label" :for="'lf-eff-' + e.id">{{ t.colEffect }}</label>
+							<v-select :id="'lf-eff-' + e.id" v-model="form.states[e.id].effect" :items="effectsOf(e.id)" :disabled="e.id === 'stop'" :aria-label="t.colEffect" dense outlined hide-details />
+						</div>
+						<div class="state-field state-outputs">
+							<span class="state-label">{{ t.colOutputs }}</span>
+							<span class="state-checks">
+								<v-checkbox v-model="form.states[e.id].outputs.strip" :disabled="!lights.stripPresent || e.id === 'stop'" :label="t.outStrip" dense hide-details class="mt-0 pt-0" :title="lights.stripPresent ? t.stripHelp : t.noStripHelp" />
+								<v-checkbox v-model="form.states[e.id].outputs.screen" :disabled="e.id === 'stop'" :label="t.outScreen" dense hide-details class="mt-0 pt-0" :title="t.screenHelp" />
+								<v-checkbox v-model="form.states[e.id].outputs.board" :label="t.outBoard" dense hide-details class="mt-0 pt-0" :title="t.boardHelp" />
+							</span>
+						</div>
+						<div v-if="effectNote(e.id)" class="state-note text-caption text-faint">{{ effectNote(e.id) }}</div>
+						<div v-if="e.id === 'pi_hot'" class="state-field state-extra">
+							<label class="state-label" for="lf-pihot">{{ t.piHotLabel }}</label>
+							<v-text-field id="lf-pihot" v-model.number="form.pi_hot_c" type="number" min="40" max="95" suffix="°C" :aria-label="t.piHotLabel" dense outlined hide-details />
+						</div>
+						<div v-if="e.id === 'live_quiet'" class="state-field state-extra">
+							<label class="state-label" for="lf-livequiet">{{ t.liveQuietLabel }}</label>
+							<v-text-field id="lf-livequiet" v-model.number="form.live_quiet_s" type="number" min="10" max="3600" :suffix="$t('plugins.WorkshopLights.tabStates.s')" :aria-label="t.liveQuietLabel" dense outlined hide-details />
 						</div>
 					</div>
 				</div>
-			</v-card-text>
-		</v-card>
+			</div>
+		</div>
 
 		<!-- ===== Legend ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-palette-outline</v-icon>{{ t.legendTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ t.legendHelp }}</div>
-				<div class="legend">
-					<div v-for="l in legend" :key="l.key" class="legend-row">
-						<span class="legend-point" :class="effectClass(l.effect)" :style="{ background: l.hex }" />
-						<span class="text-body-2">{{ l.name }}</span>
-						<span class="text-caption text-faint">{{ l.how }}</span>
-					</div>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-palette-outline</v-icon>{{ t.legendTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ t.legendHelp }}</div>
+			<div class="legend-sub">{{ t.legendModes }}</div>
+			<div class="text-caption text-faint mb-1">{{ t.legendModesHow }}</div>
+			<div class="legend">
+				<div v-for="l in legend.modes" :key="l.key" class="legend-row">
+					<span class="legend-point" :style="{ background: l.hex }" />
+					<span class="legend-name text-body-2" :title="l.name">{{ l.name }}</span>
+					<span class="legend-chip">{{ l.how }}</span>
 				</div>
-			</v-card-text>
-		</v-card>
+			</div>
+			<div class="legend-sub mt-3">{{ t.legendStates }}</div>
+			<div class="legend">
+				<div v-for="l in legend.states" :key="l.key" class="legend-row">
+					<span class="legend-point" :style="{ background: l.hex }" />
+					<span class="legend-name text-body-2" :title="l.name">{{ l.name }}</span>
+					<span class="legend-chip">{{ l.how }}</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- one help for the section, at its foot (FAMILIA-REDISENO 3, C4): it used to open the tab -->
+		<help-guide class="mt-3"><p class="mb-0">{{ t.intro }}</p></help-guide>
 	</div>
 </template>
 
@@ -136,7 +152,7 @@ import ColorRgbw from './ColorRgbw.vue'
 import LedStrip from './LedStrip.vue'
 import { copy, effectClass, rgbwHex } from './lights-shared.js'
 import { pluginActive, pathExists } from './workshop-ids.js' // states that belong to other plugins are not listed without them
-import HelpTip from './HelpTip.vue' // vue/_shared36
+import HelpLine from './HelpLine.vue' // vue/_shared36
 import LockReason from './LockReason.vue' // vue/_shared36
 import { TEST_OPS, groupAllowed } from './access-groups.js'
 import WfField from './WfField.vue' // vue/_shared36
@@ -189,6 +205,11 @@ const T = {
 	liveQuietLabel: i18n.t('plugins.WorkshopLights.tabStates.quiet_for'),
 	legendTitle: i18n.t('plugins.WorkshopLights.tabStates.legend_of_colors_in_use'),
 	legendHelp: i18n.t('plugins.WorkshopLights.tabStates.what_every_color_currently_seen_on'),
+	legendModes: i18n.t('plugins.WorkshopLights.tabStates.legend_modes'),
+	legendModesHow: i18n.t('plugins.WorkshopLights.tabStates.legend_modes_how'),
+	legendStates: i18n.t('plugins.WorkshopLights.tabStates.legend_states'),
+	noteDuet: i18n.t('plugins.WorkshopLights.tabStates.effect_note_duet'),
+	noteStop: i18n.t('plugins.WorkshopLights.tabStates.effect_note_stop'),
 	mode: i18n.t('plugins.WorkshopLights.tabStates.mode'),
 	modeHow: i18n.t('plugins.WorkshopLights.tabStates.idle_color_and_progress_bar_during'),
 	noneActive: i18n.t('plugins.WorkshopLights.tabStates.none'),
@@ -225,7 +246,7 @@ const T = {
 };
 
 export default {
-	components: { HelpGuide, WfField, HelpTip, ColorRgbw, LockReason, LedStrip: LedStrip },
+	components: { HelpLine, HelpGuide, WfField, ColorRgbw, LockReason, LedStrip: LedStrip },
 	inject: ['lights'],
 	data() {
 		return { t: T, applyingMode: null, turnIdx: 0, turnTimer: null, testOps: TEST_OPS };
@@ -366,15 +387,16 @@ export default {
 		},
 		// what every colour in use means
 		legend() {
-			const out = [];
-			['Laser', 'CNC', 'FFF'].forEach(m => out.push({ key: 'm' + m, name: T.mode + ' ' + T.modeNames[m], hex: rgbwHex(this.form.mode_colors[m]), effect: 'steady', how: T.modeHow }));
+			const modes = ['Laser', 'CNC', 'FFF'].map(m => ({ key: 'm' + m, name: T.mode + ' ' + T.modeNames[m], hex: rgbwHex(this.form.mode_colors[m]), how: T.effects.steady }));
+			// states in priority order (fixed ones first, then the combinable ones as ordered above)
+			const states = [];
 			this.rows.forEach(r => {
 				const e = this.form.states[r.id];
 				if (e.active) {
-					out.push({ key: r.id, name: this.info(r.id).name, hex: r.id === 'jog_free' ? this.jogColor : rgbwHex(e.color), effect: e.effect, how: T.effects[e.effect] });
+					states.push({ key: r.id, name: this.info(r.id).name, hex: this.hexOf(r.id), how: T.effects[e.effect] });
 				}
 			});
-			return out;
+			return { modes, states };
 		}
 	},
 	methods: {
@@ -386,9 +408,21 @@ export default {
 		// are greyed for a state that is shown on the strip or the board LEDs, unless the Pi paints the strip. A state that
 		// only goes to the screen keeps every effect.
 		effectsOf(id) {
+			const cur = this.form.states[id] && this.form.states[id].effect;
+			// the chosen effect is never greyed: the reason is written under the card (effectNote); the others stay unavailable
+			return this.effectItems.map(x => Object.assign({}, x, { disabled: this.duetLimited(id) && (x.value === 'double' || x.value === 'pulse') && x.value !== cur }));
+		},
+		duetLimited(id) {
 			const o = (this.form.states[id] && this.form.states[id].outputs) || {};
-			const inDuet = !this.lights.piPaints && (o.strip !== false || o.board === true);
-			return this.effectItems.map(x => Object.assign({}, x, { disabled: inDuet && (x.value === 'double' || x.value === 'pulse') }));
+			return !this.lights.piPaints && (o.strip !== false || o.board === true);
+		},
+		// why an effect cannot be changed or will not be seen (same place and format in every card)
+		effectNote(id) {
+			if (id === 'stop') {
+				return T.noteStop;
+			}
+			const cur = this.form.states[id] && this.form.states[id].effect;
+			return this.duetLimited(id) && (cur === 'double' || cur === 'pulse') ? T.noteDuet : '';
 		},
 		effectClass,
 		// a state that comes from another plugin (the jog without limits, the RS485 faults) is listed only with that plugin
@@ -471,10 +505,20 @@ export default {
 	display: inline-block;
 	width: 28px;
 	height: 28px;
+	flex: 0 0 28px;
 	border-radius: 50%;
 	border: 1px solid var(--tp-faint, #9e9e9e);
-	vertical-align: middle;
-	margin-right: 8px;
+}
+.jog-chip {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: var(--wf-size-m, 36px); /* the height of the fields beside it (family scale m) */
+	box-sizing: border-box;
+	padding: 0 10px;
+	border-radius: 8px;
+	border: 1px solid rgba(128, 128, 128, 0.2);
+	background: rgba(128, 128, 128, 0.08);
 }
 
 .text-faint {
@@ -526,36 +570,66 @@ export default {
 	opacity: 0.55;
 }
 .state-head {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: 28px 22px minmax(0, 1fr) auto;
+	align-items: start;
 	gap: 8px 12px;
 }
 .state-order {
-	flex: none;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	width: 28px;
 }
 .state-dot {
-	flex: none;
 	width: 22px;
 	height: 22px;
+	margin-top: 2px;
 	border-radius: 50%;
 	border: 1px solid rgba(255, 255, 255, 0.35);
 	box-shadow: 0 0 8px var(--st, transparent);
 }
 .state-title {
-	flex: 1 1 120px;
 	min-width: 0;
-	overflow-wrap: anywhere;
+}
+.state-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.state-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 28px;
+}
+/* with 2 or more cards per row the headings take the same height (name on one line, description on 4 at most), so
+   the Color / Effect row and the outputs start at the same height in neighbouring cards */
+@media (min-width: 600px) {
+	.state-head {
+		min-height: 92px;
+	}
+	.state-desc {
+		display: -webkit-box;
+		-webkit-line-clamp: 4;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+}
+@media (max-width: 479px) {
+	.state-head {
+		grid-template-columns: 28px 22px minmax(0, 1fr);
+	}
+	.state-actions {
+		grid-column: 1 / -1;
+		justify-content: flex-end;
+	}
 }
 .state-body {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-	gap: 14px;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	align-items: start;
+	gap: 14px;
 	margin-top: 14px;
 	padding-top: 14px;
 	border-top: 1px dashed rgba(128, 128, 128, 0.3);
@@ -567,31 +641,83 @@ export default {
 	gap: 4px;
 }
 .state-label {
-	font-size: 12px;
+	font-size: 13px;
+	line-height: 24px;
 	color: var(--tp-faint, #9e9e9e);
 }
-.state-outputs {
+.state-outputs,
+.state-note,
+.state-extra {
 	grid-column: 1 / -1;
+}
+.state-note {
+	margin-top: -6px;
 }
 .state-checks {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px 20px;
+	min-height: var(--wf-size-m, 36px); /* a row of check boxes: m 36 */
+	align-items: center;
+}
+.legend-sub {
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 2px;
 }
 .legend {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 6px 16px;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 4px 16px;
 }
 .legend-row {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 10px;
+	min-height: 36px;
+	min-width: 0;
 }
+/* real colour at full intensity (no blink animation), ringed so it reads on dark and light themes */
 .legend-point {
-	width: 14px;
-	height: 14px;
+	width: 18px;
+	height: 18px;
 	border-radius: 50%;
 	flex: none;
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6), 0 0 0 2px rgba(0, 0, 0, 0.5);
+	margin: 0 2px;
+}
+.legend-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.legend-chip {
+	flex: none;
+	margin-left: auto;
+	font-size: 12px;
+	line-height: 20px;
+	padding: 0 8px;
+	border-radius: 10px;
+	border: 1px solid rgba(128, 128, 128, 0.45);
+	background: rgba(128, 128, 128, 0.14);
+	white-space: nowrap;
+}
+</style>
+
+<style>
+/* label above the control (kit of the service): selects and numbers of the state cards are fields of the family scale (m 36) like the colour chip */
+.state-card .v-input--dense > .v-input__control > .v-input__slot {
+	min-height: var(--wf-size-m, 36px);
+}
+.state-card .v-select .v-select__selections {
+	flex-wrap: nowrap;
+}
+/* the two arrows are a COLUMN: the family spaces icon buttons that follow each other sideways (margin-left); here the second goes below the first, on the same
+   vertical, 8 px apart (32 + 8 = 40: their touch areas meet without overlapping) */
+.workshop-theme .state-order .v-btn--icon.v-size--small + .v-btn--icon {
+	margin-left: 0;
+	margin-top: var(--wf-gap-hit, 8px);
 }
 </style>

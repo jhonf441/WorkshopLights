@@ -1,5 +1,45 @@
 # WorkshopLights -- historial de versiones
 
+## 2.13.0 -- 2026-11-23
+
+- visible redesign on the family pieces (FAMILIA-REDISENO.md, tanda 4; family tanda 0): each section is ONE card (the tab body) headed by CardHead (icon in the color of the section, title 16/600, 4 % tint); its blocks are groups inside it (.wf-group: a 13/600 title and a divider), no more cards inside a card nor grey sub-cards (the three outputs of the summary and the scene editors are columns split by a line)
+- the scenes of the summary are tiles of 32 with the color of the scene as a swatch; the one in use carries a check (the section color never goes on a button)
+- one help per section, at its foot: Summary, Outputs (the strip fields and the board thresholds in one fold, with the intro of the tab), Lighting (three folds and the intro in one), States and Advanced (the guide that opened the tab)
+- no own scale: buttons 32, the main one 36, fields 36, the 40 px touch area and the compact bar come from the family stylesheet
+- unchanged: TimeField (HH:MM) for the night dimming hours and the read-only summary without a session (lightsView)
+
+## 2.12.2 -- 2026-11-23
+
+- optional files are never requested when absent
+
+## 2.12.1 -- 2026-11-22
+
+- select arrows, one focus ring per field, shared family stylesheet split
+
+## 2.12.0 -- 2026-11-22
+
+- Aligned arrows and equal fields
+
+## 2.11.3 -- 2026-11-22
+
+- Rebuild with shared update: start-up card split into modules, neutral Spanish texts, service texts resynced, unused .wf-index rule dropped
+
+## 2.11.2 -- 2026-11-22
+
+- Tuteo in texts (no voseo in es.json).
+
+## 2.11.1 -- 2026-11-22
+
+- Visual review round: single hover and focus for inputs and controls (family styles), 44 px switch and checkbox rows, range picker field 44 px.
+
+## 2.11.0 -- 2026-11-21
+
+- Style unification: save and strip config, reboot and remove are family actions with result line and double touch, add-strip dialog uses the family sheet, help popovers become help lines and one fold per card, 44 px controls, nothing under 12 px.
+
+## 2.10.0 -- 2026-11-20
+
+- Lights: sentence-case states, aligned state cards, legend with real colors, Pi strip answer with copyable command, board signals with icons, add a strip to the config from the page
+
 ## 2.9.14 -- 2026-11-18
 
 - accessRev: the page asks whoami at once when the service says the access changed
@@ -54,7 +94,7 @@
 
 ## 2.9.1 -- 2026-11-11
 
-- Owner report 2026-11-11: shutdown without session, kiosk PIN pad, hive confirm color, wheel release and Z keys, version in every page bar
+- User report 2026-11-11: shutdown without session, kiosk PIN pad, hive confirm color, wheel release and Z keys, version in every page bar
 
 ## 2.9.0 -- 2026-11-11
 

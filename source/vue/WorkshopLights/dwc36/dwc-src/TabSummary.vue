@@ -1,127 +1,123 @@
 <template>
 	<div>
 		<!-- ===== What the machine is doing ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-information-outline</v-icon>{{ t.nowTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.nowHelp }}</div>
-				<state-badge :ind="lights.indicator" />
-				<div class="d-flex flex-wrap mt-3 text-body-2" style="gap:6px 24px">
-					<span><b>{{ t.mode }}:</b> {{ modeName }}</span>
-					<span><b>{{ t.machine }}:</b> {{ statusName }}</span>
-					<span v-if="lights.stripPresent && lights.info.night && lights.info.night.on"><v-icon small>mdi-weather-night</v-icon> {{ t.nightOn }} ({{ lights.info.night.level }} %)</span>
-				</div>
-							<help-guide class="mb-3"><p class="mb-0">{{ $t('plugins.WorkshopLights.lights.here_you_decide_how_what_the') }}</p></help-guide>
-</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-information-outline</v-icon>{{ t.nowTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.nowHelp }}</div>
+			<state-badge :ind="lights.indicator" />
+			<div class="d-flex flex-wrap mt-3 text-body-2" style="gap:6px 24px">
+				<span><b>{{ t.mode }}:</b> {{ modeName }}</span>
+				<span><b>{{ t.machine }}:</b> {{ statusName }}</span>
+				<span v-if="lights.stripPresent && lights.info.night && lights.info.night.on"><v-icon small>mdi-weather-night</v-icon> {{ t.nightOn }} ({{ lights.info.night.level }} %)</span>
+			</div>
+		</div>
 
 		<!-- ===== The three outputs, live ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-export-variant</v-icon>{{ t.outputsTitle }}</div>
-				<div class="text-caption text-faint mb-3">{{ t.outputsHelp }}</div>
-				<div class="outputs">
-					<div class="output">
-						<div class="output-title"><v-icon small class="mr-1">mdi-led-strip-variant</v-icon>{{ t.strip }}</div>
-						<template v-if="lights.stripPresent">
-							<led-strip :secs="stripSecs" />
-							<div class="text-caption text-faint mt-1">{{ lights.form && lights.form.output && lights.form.output.kind === 'pi' ? t.stripHelpPi : t.stripHelp }}</div>
-						</template>
-						<div v-else class="text-body-2 text-faint">{{ t.noStrip }}</div>
-					</div>
-					<div class="output">
-						<div class="output-title"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.screen }}</div>
-						<state-badge :ind="lights.indicator" compact />
-						<div class="text-caption text-faint mt-1">{{ screenHelp }}</div>
-					</div>
-					<div class="output">
-						<div class="output-title"><v-icon small class="mr-1">mdi-chip</v-icon>{{ t.board }}</div>
-						<div v-if="board.length" class="d-flex" style="gap:6px">
-							<span v-for="l in board" :key="l.id" class="board-led" :class="l.blink ? blinkClass(l.blink) : ''"
-								:style="{ background: l.on ? l.hex : 'rgba(40,40,40,0.9)', boxShadow: l.on ? '0 0 6px ' + l.hex : 'none' }" :title="boardName(l.id) + ': ' + l.text" />
-						</div>
-						<div v-else class="text-body-2 text-faint">{{ lights.form.leds_board.active ? t.boardNoData : t.boardOff }}</div>
-						<div class="text-caption text-faint mt-1">{{ t.boardHelp }}</div>
-					</div>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-export-variant</v-icon>{{ t.outputsTitle }}</h4>
+			<div class="text-caption text-faint mb-3">{{ t.outputsHelp }}</div>
+			<div class="outputs">
+				<div class="output">
+					<div class="output-title"><v-icon small class="mr-1">mdi-led-strip-variant</v-icon>{{ t.strip }}</div>
+					<template v-if="lights.stripPresent">
+						<led-strip :secs="stripSecs" />
+						<div class="text-caption text-faint mt-1">{{ lights.form && lights.form.output && lights.form.output.kind === 'pi' ? t.stripHelpPi : t.stripHelp }}</div>
+					</template>
+					<div v-else class="text-body-2 text-faint">{{ t.noStrip }}</div>
 				</div>
-			</v-card-text>
-		</v-card>
+				<div class="output">
+					<div class="output-title"><v-icon small class="mr-1">mdi-monitor-dashboard</v-icon>{{ t.screen }}</div>
+					<state-badge :ind="lights.indicator" compact />
+					<div class="text-caption text-faint mt-1">{{ screenHelp }}</div>
+				</div>
+				<div class="output">
+					<div class="output-title"><v-icon small class="mr-1">mdi-chip</v-icon>{{ t.board }}</div>
+					<div v-if="board.length" class="d-flex" style="gap:6px">
+						<span v-for="l in board" :key="l.id" class="board-led" :class="l.blink ? blinkClass(l.blink) : ''"
+							:style="{ background: l.on ? l.hex : 'rgba(40,40,40,0.9)', boxShadow: l.on ? '0 0 6px ' + l.hex : 'none' }" :title="boardName(l.id) + ': ' + l.text" />
+					</div>
+					<div v-else class="text-body-2 text-faint">{{ lights.form.leds_board.active ? t.boardNoData : t.boardOff }}</div>
+					<div class="text-caption text-faint mt-1">{{ t.boardHelp }}</div>
+				</div>
+			</div>
+		</div>
 
 		<!-- ===== Active states ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-traffic-light</v-icon>{{ t.activeTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ t.activeHelp }}</div>
-				<div v-if="active.length" class="d-flex flex-wrap" style="gap:8px">
-					<v-chip v-for="a in active" :key="a.id" small outlined>
-						<span class="chip-dot" :class="effectClass(a.effect)" :style="{ backgroundColor: a.hex }" />{{ a.name }}
-					</v-chip>
-				</div>
-				<div v-else class="text-body-2 text-faint">{{ t.noneActive }}</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-traffic-light</v-icon>{{ t.activeTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ t.activeHelp }}</div>
+			<div v-if="active.length" class="d-flex flex-wrap" style="gap:8px">
+				<v-chip v-for="a in active" :key="a.id" small outlined>
+					<span class="chip-dot" :class="effectClass(a.effect)" :style="{ backgroundColor: a.hex }" />{{ a.name }}
+				</v-chip>
+			</div>
+			<div v-else class="text-body-2 text-faint">{{ t.noneActive }}</div>
+		</div>
 
 		<!-- ===== Work light (strip only) ===== -->
-		<v-card v-if="lights.stripPresent" class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ t.lightHelp }}</div>
-				<div class="d-flex flex-wrap align-center" style="gap:12px">
-					<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" dense hide-details class="mt-0" :loading="lights.busyLight" :disabled="!lights.canDo('light.set')" @change="lights.changeLight" />
-					<!-- the same switch as in the Lighting tab: both can be turned on and off from here -->
-					<v-switch :input-value="lights.statusAuto" :label="$t('plugins.WorkshopLights.tabLighting.automatic_status_lights')" dense hide-details class="mt-0" :loading="lights.busyState" :disabled="!lights.canDo('statuslight.set')" @change="lights.changeState" />
-					<div v-for="s in scenes" :key="s.id" class="d-flex flex-column">
-						<v-btn small outlined :disabled="!sceneAllowed(s)" :color="lights.form.work_light.scene === s.id ? 'primary' : ''" @click="lights.applyScene(s)">
-							<span class="chip-dot" :style="{ backgroundColor: hex(s.color) }" />{{ s.name }}
-						</v-btn>
-						<!-- a rule may deny ONE scene: its sentence goes under its button, only when the group itself is allowed -->
-						<lock-reason v-if="lights.canDo('lights.scene')" op="lights.scene" :target="sceneTarget(s)" class="mt-1" :subject="$t('plugins.WorkshopLights.subjects.scenes')" />
-					</div>
+		<div v-if="lights.stripPresent" class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-lightbulb-on-outline</v-icon>{{ t.lightTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ t.lightHelp }}</div>
+			<div class="d-flex flex-wrap align-center" style="gap:8px 24px">
+				<v-switch :input-value="lights.lightOn" :label="t.lightSwitch" dense hide-details class="mt-0" :loading="lights.busyLight" :disabled="!lights.canDo('light.set')" @change="lights.changeLight" />
+				<!-- the same switch as in the Lighting tab: both can be turned on and off from here -->
+				<v-switch :input-value="lights.statusAuto" :label="$t('plugins.WorkshopLights.tabLighting.automatic_status_lights')" dense hide-details class="mt-0" :loading="lights.busyState" :disabled="!lights.canDo('statuslight.set')" @change="lights.changeState" />
+			</div>
+			<!-- the scenes as tiles of 32 (FAMILIA-REDISENO 5, tanda 4): the swatch is the color of the scene, the one in use carries a check
+			     (the color of the section never goes on a button) -->
+			<div v-if="scenes.length" class="scene-tiles mt-2">
+				<div v-for="s in scenes" :key="s.id" class="scene-cell">
+					<v-btn small outlined block class="scene-tile" :aria-pressed="String(lights.form.work_light.scene === s.id)" :disabled="!sceneAllowed(s)" @click="lights.applyScene(s)">
+						<span class="scene-swatch" :style="{ backgroundColor: hex(s.color) }" aria-hidden="true" />
+						<span class="scene-name" :class="{ 'scene-name-on': lights.form.work_light.scene === s.id }">{{ s.name }}</span>
+						<v-icon v-if="lights.form.work_light.scene === s.id" small class="ml-1" aria-hidden="true">mdi-check</v-icon>
+					</v-btn>
+					<!-- a rule may deny ONE scene: its sentence goes under its tile, only when the group itself is allowed -->
+					<lock-reason v-if="lights.canDo('lights.scene')" op="lights.scene" :target="sceneTarget(s)" class="mt-1" :subject="$t('plugins.WorkshopLights.subjects.scenes')" />
 				</div>
-				<lock-reason :ops="useOps" min="operator" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.use_lights')" />
-				<!-- statuslight.set needs a technician (light.set and lights.scene an operator): its own reason, only when the first one does not already show -->
-				<lock-reason v-if="useAllowed" :ops="statusOps" min="technician" class="mt-1" :subject="$t('plugins.WorkshopLights.subjects.status_lights')" />
-				<div v-if="lights.info.auto_off_min != null" class="text-caption text-faint mt-2">{{ t.autoOffIn }} {{ lights.info.auto_off_min }} min</div>
-			</v-card-text>
-		</v-card>
+			</div>
+			<lock-reason :ops="useOps" min="operator" class="mt-2" :subject="$t('plugins.WorkshopLights.subjects.use_lights')" />
+			<!-- statuslight.set needs a technician (light.set and lights.scene an operator): its own reason, only when the first one does not already show -->
+			<lock-reason v-if="useAllowed" :ops="statusOps" min="technician" class="mt-1" :subject="$t('plugins.WorkshopLights.subjects.status_lights')" />
+			<div v-if="lights.info.auto_off_min != null" class="text-caption text-faint mt-2">{{ t.autoOffIn }} {{ lights.info.auto_off_min }} min</div>
+		</div>
 
 		<!-- ===== Power (strip only) ===== -->
-		<v-card v-if="lights.stripPresent" class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-flash-outline</v-icon>{{ t.powerTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ t.powerHelp }}</div>
-				<div class="d-flex flex-wrap text-body-2" style="gap:6px 24px">
-					<span><b>{{ t.powerNow }}:</b> {{ power.ma }} mA</span>
-					<span><b>{{ t.powerWorst }}:</b> {{ worst }} mA</span>
-					<span v-if="limit"><b>{{ t.powerLimit }}:</b> {{ limit }} mA</span>
-				</div>
-				<v-alert v-if="limit && (power.over || worst > limit)" dense text :type="power.over ? 'error' : 'warning'" class="mt-2 mb-0">
-					{{ power.over ? t.powerOver : t.powerWorstOver }}
-				</v-alert>
-			</v-card-text>
-		</v-card>
+		<div v-if="lights.stripPresent" class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-flash-outline</v-icon>{{ t.powerTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ t.powerHelp }}</div>
+			<div class="d-flex flex-wrap text-body-2" style="gap:6px 24px">
+				<span><b>{{ t.powerNow }}:</b> {{ power.ma }} mA</span>
+				<span><b>{{ t.powerWorst }}:</b> {{ worst }} mA</span>
+				<span v-if="limit"><b>{{ t.powerLimit }}:</b> {{ limit }} mA</span>
+			</div>
+			<v-alert v-if="limit && (power.over || worst > limit)" dense text :type="power.over ? 'error' : 'warning'" class="mt-2 mb-0">
+				{{ power.over ? t.powerOver : t.powerWorstOver }}
+			</v-alert>
+		</div>
 
 		<!-- ===== History ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-history</v-icon>{{ t.historyTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ t.historyHelp }}</div>
-				<v-simple-table v-if="history.length" dense class="history">
-					<thead>
-						<tr><th>{{ t.colTime }}</th><th>{{ t.colStates }}</th><th>{{ t.colMode }}</th><th class="text-right">{{ t.colDuration }}</th></tr>
-					</thead>
-					<tbody>
-						<tr v-for="h in history" :key="h.t">
-							<td>{{ h.time }}</td>
-							<td>{{ h.names }}</td>
-							<td>{{ h.mode }}</td>
-							<td class="text-right">{{ h.duration }}</td>
-						</tr>
-					</tbody>
-				</v-simple-table>
-				<div v-else class="text-body-2 text-faint">{{ t.historyEmpty }}</div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-history</v-icon>{{ t.historyTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ t.historyHelp }}</div>
+			<v-simple-table v-if="history.length" dense class="history">
+				<thead>
+					<tr><th>{{ t.colTime }}</th><th>{{ t.colStates }}</th><th>{{ t.colMode }}</th><th class="text-right">{{ t.colDuration }}</th></tr>
+				</thead>
+				<tbody>
+					<tr v-for="h in history" :key="h.t">
+						<td>{{ h.time }}</td>
+						<td>{{ h.names }}</td>
+						<td>{{ h.mode }}</td>
+						<td class="text-right">{{ h.duration }}</td>
+					</tr>
+				</tbody>
+			</v-simple-table>
+			<div v-else class="text-body-2 text-faint">{{ t.historyEmpty }}</div>
+		</div>
+
+		<!-- one help for the section, at its foot (FAMILIA-REDISENO 3, C4): it used to sit inside the first card -->
+		<help-guide class="mt-3"><p class="mb-0">{{ $t('plugins.WorkshopLights.lights.here_you_decide_how_what_the') }}</p></help-guide>
 	</div>
 </template>
 
@@ -294,19 +290,48 @@ export default {
 .text-faint {
 	color: var(--tp-faint);
 }
+/* the three outputs: columns split by a line, not grey sub-cards (FAMILIA-REDISENO 3: nothing inside a card is a card) */
 .outputs {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-	gap: 12px;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 8px 24px;
 }
 .output {
-	padding: 10px 12px;
-	border-radius: 8px;
-	background: rgba(128, 128, 128, 0.06);
+	padding-top: 8px;
+	border-top: 1px solid var(--wf-line, rgba(128, 128, 128, 0.25));
 }
 .output-title {
-	font-weight: 500;
+	font-size: 13px;
+	font-weight: 600;
 	margin-bottom: 8px;
+}
+/* scenes: tiles of 32 (the button is the family's), 8 apart so their 40 px areas meet without overlapping */
+.scene-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: 8px;
+}
+.scene-cell {
+	min-width: 0;
+	container-type: inline-size; /* the name is cut to the width of its tile (100cqw), never wider than the column */
+}
+.scene-swatch {
+	flex: none;
+	width: 16px;
+	height: 16px;
+	margin-right: 8px;
+	border-radius: 4px;
+	box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.5);
+}
+.scene-name {
+	min-width: 0;
+	max-width: calc(100cqw - 64px); /* button padding 24 + swatch 24 + check 16 */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.scene-name-on {
+	font-weight: 600;
 }
 .board-led {
 	width: 18px;

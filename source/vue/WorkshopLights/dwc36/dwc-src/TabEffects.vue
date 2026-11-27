@@ -1,64 +1,60 @@
 <template>
 	<div>
-		<div class="text-body-2 text-faint mb-3">{{ t.intro }}</div>
+		<!-- the one secondary line under the head of the section (two short sentences: not folded) -->
+		<div class="text-caption text-faint mb-2">{{ t.intro }}</div>
 
 		<v-alert v-if="!lights.stripPresent" dense outlined type="info" class="mb-3">{{ t.noStrip }}</v-alert>
 		<template v-else>
 			<!-- ===== Start-up animation ===== -->
-			<v-card class="mb-3">
-				<v-card-text>
-					<div class="d-flex align-center mb-1">
-						<div class="text-subtitle-1 font-weight-medium"><v-icon small class="mr-1">mdi-animation-play</v-icon>{{ t.animTitle }}</div>
-						<v-spacer />
-						<v-btn small outlined :loading="lights.testing === 'anim'" @click="showAnimation()"><v-icon small left>mdi-play</v-icon>{{ t.showNow }}</v-btn>
+			<div class="wf-group">
+				<div class="d-flex align-center mb-1">
+					<h4 class="wf-group-title mb-0"><v-icon small class="mr-1">mdi-animation-play</v-icon>{{ t.animTitle }}</h4>
+					<v-spacer />
+					<v-btn small outlined :loading="lights.testing === 'anim'" @click="showAnimation()"><v-icon small left>mdi-play</v-icon>{{ t.showNow }}</v-btn>
+				</div>
+				<div class="text-caption text-faint mb-3">{{ t.animWhat }}</div>
+				<div class="d-flex flex-wrap align-center" style="gap:16px">
+					<v-switch v-model="form.animation.active" :label="t.animSwitch" dense hide-details class="mt-0" />
+					<v-select v-model="form.animation.kind" :items="animTypes" :label="t.animType" dense outlined hide-details style="max-width:230px" :disabled="!form.animation.active" />
+					<div v-if="form.animation.kind !== 'rainbow'" style="min-width:240px;flex:1 1 240px;max-width:360px">
+						<color-rgbw v-model="form.animation.color" :name="t.animColor" />
 					</div>
-					<div class="text-caption text-faint mb-3">{{ t.animWhat }}</div>
-					<div class="d-flex flex-wrap align-center" style="gap:16px">
-						<v-switch v-model="form.animation.active" :label="t.animSwitch" dense hide-details class="mt-0" />
-						<v-select v-model="form.animation.kind" :items="animTypes" :label="t.animType" dense outlined hide-details style="max-width:230px" :disabled="!form.animation.active" />
-						<div v-if="form.animation.kind !== 'rainbow'" style="min-width:240px;flex:1 1 240px;max-width:360px">
-							<color-rgbw v-model="form.animation.color" :name="t.animColor" />
-						</div>
-						<div v-if="form.animation.kind === 'bar' || form.animation.kind === 'center'" class="d-flex align-center" style="flex:1 1 260px;max-width:420px">
-							<span class="text-body-2 mr-2">{{ t.smooth }}</span>
-							<v-slider v-model="form.animation.step" min="1" max="12" hide-details dense thumb-label />
-							<span class="text-body-2 ml-2">{{ t.fast }}</span>
-						</div>
+					<div v-if="form.animation.kind === 'bar' || form.animation.kind === 'center'" class="d-flex align-center" style="flex:1 1 260px;max-width:420px">
+						<span class="text-body-2 mr-2">{{ t.smooth }}</span>
+						<v-slider v-model="form.animation.step" min="1" max="12" hide-details dense thumb-label />
+						<span class="text-body-2 ml-2">{{ t.fast }}</span>
 					</div>
-				</v-card-text>
-			</v-card>
+				</div>
+			</div>
 
 			<!-- ===== End of job ===== -->
-			<v-card class="mb-3">
-				<v-card-text>
-					<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-flag-checkered</v-icon>{{ t.endTitle }}</div>
-					<div class="text-caption text-faint mb-3">{{ t.endWhat }}</div>
-					<div class="d-flex flex-wrap align-center" style="gap:16px">
-						<v-switch v-model="form.effects.end_job.active" :label="t.endSwitch" dense hide-details class="mt-0" />
-						<div v-if="form.effects.end_job.active" style="min-width:220px;flex:1 1 220px;max-width:320px">
-							<color-rgbw v-model="form.effects.end_job.color" :name="t.endColor" />
-						</div>
-						<div v-if="form.effects.end_job.active" class="d-flex align-center" style="flex:1 1 220px;max-width:320px">
-							<span class="text-body-2 mr-2" style="white-space:nowrap">{{ $t('plugins.WorkshopLights.tabEffects.n_times', { n: form.effects.end_job.times }) }}</span>
-							<v-slider v-model="form.effects.end_job.times" min="1" max="6" hide-details dense />
-						</div>
+			<div class="wf-group">
+				<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-flag-checkered</v-icon>{{ t.endTitle }}</h4>
+				<div class="text-caption text-faint mb-3">{{ t.endWhat }}</div>
+				<div class="d-flex flex-wrap align-center" style="gap:16px">
+					<v-switch v-model="form.effects.end_job.active" :label="t.endSwitch" dense hide-details class="mt-0" />
+					<div v-if="form.effects.end_job.active" style="min-width:220px;flex:1 1 220px;max-width:320px">
+						<color-rgbw v-model="form.effects.end_job.color" :name="t.endColor" />
 					</div>
-					<v-btn v-if="form.effects.end_job.active" small outlined class="mt-2" :loading="lights.testing === 'effect'" @click="tryEnd()">
-						<v-icon small left>mdi-play</v-icon>{{ t.endTry }}
-					</v-btn>
-					<div class="text-caption text-faint mt-2">{{ t.endNote }}</div>
-				</v-card-text>
-			</v-card>
+					<div v-if="form.effects.end_job.active" class="d-flex align-center" style="flex:1 1 220px;max-width:320px">
+						<span class="text-body-2 mr-2" style="white-space:nowrap">{{ $t('plugins.WorkshopLights.tabEffects.n_times', { n: form.effects.end_job.times }) }}</span>
+						<v-slider v-model="form.effects.end_job.times" min="1" max="6" hide-details dense />
+					</div>
+				</div>
+				<v-btn v-if="form.effects.end_job.active" small outlined class="mt-2" :loading="lights.testing === 'effect'" @click="tryEnd()">
+					<v-icon small left>mdi-play</v-icon>{{ t.endTry }}
+				</v-btn>
+				<div class="text-caption text-faint mt-2">{{ t.endNote }}</div>
+			</div>
 		</template>
 
 		<!-- ===== While in use ===== -->
-		<v-card class="mb-3">
-			<v-card-text>
-				<div class="text-subtitle-1 font-weight-medium mb-1"><v-icon small class="mr-1">mdi-shimmer</v-icon>{{ t.useTitle }}</div>
-				<div class="text-caption text-faint mb-2">{{ t.useWhat }}</div>
-				<div class="help-tip-row"><v-switch v-if="hasJog" v-model="form.effects.jog_free_always" dense class="mt-0" hide-details :label="t.jogAlways" /><help-tip :title="t.jogAlways">{{ t.jogAlwaysHelp }}</help-tip></div>
-			</v-card-text>
-		</v-card>
+		<div class="wf-group">
+			<h4 class="wf-group-title"><v-icon small class="mr-1">mdi-shimmer</v-icon>{{ t.useTitle }}</h4>
+			<div class="text-caption text-faint mb-2">{{ t.useWhat }}</div>
+			<div class="help-tip-row"><v-switch v-if="hasJog" v-model="form.effects.jog_free_always" dense class="mt-0" hide-details :label="t.jogAlways" /></div>
+			<help-line class="mt-2" :text="t.jogAlwaysHelp" />
+		</div>
 	</div>
 </template>
 
@@ -69,7 +65,7 @@ import i18n from '../../i18n'
 
 import ColorRgbw from './ColorRgbw.vue'
 import { pluginActive } from './workshop-ids.js' // the jog is another plugin: nothing about it when it is absent
-import HelpTip from './HelpTip.vue' // vue/_shared36
+import HelpLine from './HelpLine.vue' // vue/_shared36
 
 // Every user-visible text of this component is here.
 const T = {
@@ -101,7 +97,7 @@ const T = {
 };
 
 export default {
-	components: { HelpTip, ColorRgbw },
+	components: { HelpLine, ColorRgbw },
 	inject: ['lights'],
 	data() {
 		return { t: T };
