@@ -1,5 +1,9 @@
 # WorkshopLights -- historial de versiones
 
+## 2.13.1 -- 2026-11-28
+
+- fix: buttons, chips and tabs no longer show a framed shadow around them (the invisible touch area was drawing Vuetify's raise shadow)
+
 ## 2.13.0 -- 2026-11-23
 
 - visible redesign on the family pieces (FAMILIA-REDISENO.md, tanda 4; family tanda 0): each section is ONE card (the tab body) headed by CardHead (icon in the color of the section, title 16/600, 4 % tint); its blocks are groups inside it (.wf-group: a 13/600 title and a divider), no more cards inside a card nor grey sub-cards (the three outputs of the summary and the scene editors are columns split by a line)

@@ -2,7 +2,7 @@
   "id": "WorkshopLights",
   "name": "Lights and Status",
   "author": "jhonf441",
-  "version": "2.13.0",
+  "version": "2.13.1",
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/jhonf441/WorkshopLights",
   "tags": [
@@ -20,9 +20,9 @@
     "permissions.json"
   ],
   "dwcFiles": [
-    "css/WorkshopLights.d8989162.css",
-    "css/WorkshopLights.d8989162.css.gz",
-    "js/WorkshopLights.0cbe7f97.js",
-    "js/WorkshopLights.0cbe7f97.js.gz"
+    "css/WorkshopLights.9a8aba16.css",
+    "css/WorkshopLights.9a8aba16.css.gz",
+    "js/WorkshopLights.11345cc2.js",
+    "js/WorkshopLights.11345cc2.js.gz"
   ]
 }
